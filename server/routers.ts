@@ -243,7 +243,8 @@ export const appRouter = router({
         const pages = await db.getProjectPages(input.id);
         const exportedFiles: Array<{ path: string; content: string; type: string }> = [];
 
-        const generateElementHTML = (element: any, indent = ''): string => {
+        // Recursive HTML generation with proper hierarchy
+        const generateElementHTML = (element: any, allElements: any[], indent = ''): string => {
           const styles = element.styles || {};
           const styleStr = Object.entries(styles)
             .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
@@ -253,25 +254,46 @@ export const appRouter = router({
           const attrStr = Object.entries(attrs).filter(([k]) => k !== 'class').map(([k, v]) => `${k}="${v}"`).join(' ');
           const className = attrs.class || '';
 
+          // Find and render children recursively
+          const children = allElements
+            .filter(el => el.parentId === element.id)
+            .sort((a, b) => a.order - b.order);
+
+          const childrenHTML = children.length > 0
+            ? '\n' + children.map(child => generateElementHTML(child, allElements, indent + '  ')).join('\n') + '\n' + indent
+            : content;
+
           switch (element.elementType) {
-            case 'container': case 'div': return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${content}</div>`;
-            case 'heading': return `${indent}<h${attrs.level || '1'} class="${className}" style="${styleStr}" ${attrStr}>${content}</h${attrs.level || '1'}>`;
-            case 'text': case 'paragraph': return `${indent}<p class="${className}" style="${styleStr}" ${attrStr}>${content}</p>`;
-            case 'button': return `${indent}<button class="${className}" style="${styleStr}" ${attrStr}>${content}</button>`;
-            case 'link': return `${indent}<a href="${attrs.href || '#'}" class="${className}" style="${styleStr}" ${attrStr}>${content}</a>`;
-            case 'image': return `${indent}<img src="${content}" alt="${attrs.alt || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
-            case 'input': return `${indent}<input type="${attrs.type || 'text'}" placeholder="${attrs.placeholder || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
-            default: return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${content}</div>`;
+            case 'container':
+            case 'div':
+              return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</div>`;
+            case 'heading':
+              return `${indent}<h${attrs.level || '1'} class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</h${attrs.level || '1'}>`;
+            case 'text':
+            case 'paragraph':
+              return `${indent}<p class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</p>`;
+            case 'button':
+              return `${indent}<button class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</button>`;
+            case 'link':
+              return `${indent}<a href="${attrs.href || '#'}" class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</a>`;
+            case 'image':
+              return `${indent}<img src="${content}" alt="${attrs.alt || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
+            case 'input':
+              return `${indent}<input type="${attrs.type || 'text'}" placeholder="${attrs.placeholder || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
+            default:
+              return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${childrenHTML}</div>`;
           }
         };
 
         for (const page of pages) {
           const elements = await db.getPageElements(page.id);
-          const elementsHTML = elements.filter(el => !el.parentId).sort((a, b) => a.order - b.order).map(el => generateElementHTML(el, '  ')).join('\n');
+          // Only render root elements - children are rendered recursively
+          const rootElements = elements.filter(el => !el.parentId).sort((a, b) => a.order - b.order);
+          const elementsHTML = rootElements.map(el => generateElementHTML(el, elements, '  ')).join('\n');
           const slug = page.slug === 'index' ? 'index' : page.slug;
 
           if (input.format === 'nextjs' || input.format === 'vercel') {
-            const jsxContent = elementsHTML.replace(/class="/g, 'className="').replace(/style="([^"]*)"/g, (_, s) => {
+            const jsxContent = elementsHTML.replace(/class=\"/g, 'className=\"').replace(/style=\"([^\"]*)\"/g, (_, s) => {
               const obj = s.split(';').filter((x: string) => x.trim()).map((x: string) => {
                 const [k, v] = x.split(':').map((y: string) => y.trim());
                 return `${k.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase())}: "${v}"`;
@@ -282,7 +304,31 @@ export const appRouter = router({
           } else if (input.format === 'wordpress') {
             exportedFiles.push({ path: `theme/${slug === 'index' ? 'index' : 'page-' + slug}.php`, content: `<?php get_header(); ?>\n<main>\n${elementsHTML}\n</main>\n<?php get_footer(); ?>`, type: 'php' });
           } else {
-            const htmlDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${page.name}</title>\n  <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: system-ui, sans-serif; }</style>\n</head>\n<body>\n${elementsHTML}\n</body>\n</html>`;
+            const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${page.name}</title>
+  <!-- UIkit CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/css/uikit.min.css" />
+  <!-- Google Fonts (Tech Space Theme) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@500;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Heebo', sans-serif; }
+  </style>
+</head>
+<body>
+${elementsHTML}
+  <!-- UIkit JS -->
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit-icons.min.js"></script>
+</body>
+</html>`;
             const folder = input.format === 'hostinger' ? 'public_html/' : '';
             exportedFiles.push({ path: `${folder}${slug}.html`, content: htmlDoc, type: 'html' });
           }
@@ -774,6 +820,55 @@ export const appRouter = router({
 
         await db.deleteAsset(input.id);
         return { success: true };
+      }),
+
+    // Upload file for AI chat attachment (temporary, not saved to assets table)
+    uploadForAI: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        fileData: z.string(), // base64
+        mimeType: z.string(),
+        fileType: z.enum(['image', 'code']),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Validate file type
+        const validImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        const validCodeTypes = ['text/html', 'text/css', 'text/javascript', 'application/javascript', 'text/plain'];
+
+        if (input.fileType === 'image' && !validImageTypes.includes(input.mimeType)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Invalid image type. Supported: PNG, JPG, WEBP'
+          });
+        }
+
+        if (input.fileType === 'code' && !validCodeTypes.includes(input.mimeType)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Invalid code file type. Supported: HTML, CSS, JS'
+          });
+        }
+
+        // Decode base64 and upload to temporary storage
+        const buffer = Buffer.from(input.fileData, 'base64');
+
+        // 5MB limit for attachments
+        if (buffer.length > 5 * 1024 * 1024) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'File too large. Maximum size: 5MB'
+          });
+        }
+
+        const fileKey = `users/${ctx.user.id}/ai-temp/${nanoid()}-${input.name}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+
+        return {
+          url,
+          fileKey,
+          fileType: input.fileType,
+          mimeType: input.mimeType,
+        };
       }),
   }),
 

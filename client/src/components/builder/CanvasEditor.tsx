@@ -10,6 +10,8 @@ type CanvasEditorProps = {
   onElementSelect: (id: number | null) => void;
   onElementsChange: () => void;
   viewportMode: 'desktop' | 'tablet' | 'mobile';
+  selectedElements?: { id: number; number: number; type: string; content: string }[];
+  onElementClick?: (elementId: number, event: React.MouseEvent) => void;
 };
 
 export default function CanvasEditor({
@@ -19,6 +21,8 @@ export default function CanvasEditor({
   onElementSelect,
   onElementsChange,
   viewportMode,
+  selectedElements = [],
+  onElementClick,
 }: CanvasEditorProps) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -115,23 +119,38 @@ export default function CanvasEditor({
 
   const renderElement = (element: Element) => {
     const isSelected = element.id === selectedElementId;
+    const selectionData = selectedElements.find(sel => sel.id === element.id);
+    const isMultiSelected = !!selectionData;
     const styles = element.styles || {};
     const attributes = element.attributes || {};
 
     const commonProps = {
       key: element.id,
-      className: `${attributes.class || ''} ${isSelected ? 'ring-2 ring-blue-500' : ''} cursor-pointer hover:ring-1 hover:ring-blue-300 transition-all`,
+      className: `${attributes.class || ''} ${isSelected ? 'ring-2 ring-blue-500' : ''} ${isMultiSelected ? 'ring-2 ring-blue-600' : ''} cursor-pointer hover:ring-1 hover:ring-blue-300 transition-all relative`,
       style: styles,
       onClick: (e: React.MouseEvent) => {
         e.stopPropagation();
-        onElementSelect(element.id);
+        // Handle Ctrl+Click for multi-select
+        if (onElementClick && (e.ctrlKey || e.metaKey)) {
+          onElementClick(element.id, e);
+        } else {
+          onElementSelect(element.id);
+        }
       },
     };
+
+    // Number badge overlay for multi-selected elements
+    const numberBadge = isMultiSelected && (
+      <div className="absolute top-0 left-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10 shadow-md">
+        {selectionData.number}
+      </div>
+    );
 
     switch (element.elementType) {
       case 'container':
         return (
           <div {...commonProps}>
+            {numberBadge}
             {elements
               .filter(e => e.parentId === element.id)
               .sort((a, b) => a.order - b.order)
@@ -142,14 +161,20 @@ export default function CanvasEditor({
       case 'text':
       case 'paragraph':
         return (
-          <p {...commonProps} dangerouslySetInnerHTML={{ __html: element.content || 'Text content' }} />
+          <p {...commonProps}>
+            {numberBadge}
+            <span dangerouslySetInnerHTML={{ __html: element.content || 'Text content' }} />
+          </p>
         );
 
       case 'heading':
         const level = attributes.level || '1';
         const headingContent = element.content || `Heading ${level}`;
+        const HeadingWithBadge = ({ children }: { children: React.ReactNode }) => (
+          <>{numberBadge}{children}</>
+        );
         switch (level) {
-          case '1': return <h1 {...commonProps}>{headingContent}</h1>;
+          case '1': return <h1 {...commonProps}><HeadingWithBadge>{headingContent}</HeadingWithBadge></h1>;
           case '2': return <h2 {...commonProps}>{headingContent}</h2>;
           case '3': return <h3 {...commonProps}>{headingContent}</h3>;
           case '4': return <h4 {...commonProps}>{headingContent}</h4>;
@@ -191,7 +216,136 @@ export default function CanvasEditor({
           </select>
         );
 
+      // ========== UIKIT COMPONENTS ==========
+      case 'uk-section':
+        return (
+          <section {...commonProps} className={`${commonProps.className} ${attributes.class || ''}`}>
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-purple-600 text-white text-xs px-2 py-0.5 rounded">section</div>
+            {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+            {!elements.some(e => e.parentId === element.id) && <span className="text-gray-400 text-sm">{element.content || 'Section'}</span>}
+          </section>
+        );
+
+      case 'uk-container':
+        return (
+          <div {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-container'}`}>
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">container</div>
+            {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+            {!elements.some(e => e.parentId === element.id) && <span className="text-gray-400 text-sm">{element.content || 'Container'}</span>}
+          </div>
+        );
+
+      case 'uk-card':
+        return (
+          <div {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-card uk-card-default uk-card-body'}`}>
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">card</div>
+            {element.content && <h3 className="uk-card-title">{element.content}</h3>}
+            {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+          </div>
+        );
+
+      case 'uk-grid':
+        return (
+          <div {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-grid'}`} uk-grid="">
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-0.5 rounded">grid</div>
+            {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(child => (
+              <div key={child.id} className={attributes.childWidth || 'uk-width-1-3@m'}>
+                {renderElement(child)}
+              </div>
+            ))}
+          </div>
+        );
+
+      case 'uk-navbar':
+        return (
+          <nav {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-navbar-container'}`} uk-navbar="">
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded">navbar</div>
+            <div className="uk-navbar-left">
+              <span className="uk-navbar-item uk-logo">{element.content || 'Logo'}</span>
+            </div>
+            {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+          </nav>
+        );
+
+      case 'uk-button':
+        return (
+          <button {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-button uk-button-primary'}`}>
+            {numberBadge}
+            {element.content || 'Button'}
+          </button>
+        );
+
+      case 'uk-hero':
+        return (
+          <section {...commonProps} className={`${commonProps.className} ${attributes.class || ''} uk-flex uk-flex-middle`} style={{ ...styles, minHeight: styles.minHeight || '60vh' }}>
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-pink-600 text-white text-xs px-2 py-0.5 rounded">hero</div>
+            <div className="uk-container uk-text-center w-full">
+              {element.content && <h1 className="uk-heading-large">{element.content}</h1>}
+              {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+            </div>
+          </section>
+        );
+
+      case 'uk-article':
+        return (
+          <article {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-article'}`}>
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-teal-600 text-white text-xs px-2 py-0.5 rounded">article</div>
+            <div dangerouslySetInnerHTML={{ __html: element.content || '<h1 class="uk-article-title">Article Title</h1><p>Article content...</p>' }} />
+          </article>
+        );
+
+      case 'uk-alert':
+        const alertStyle = attributes.style || 'primary';
+        return (
+          <div {...commonProps} className={`${commonProps.className} uk-alert uk-alert-${alertStyle}`}>
+            {numberBadge}
+            {element.content || 'Alert message'}
+          </div>
+        );
+
+      case 'uk-accordion':
+        return (
+          <ul {...commonProps} className={`${commonProps.className} ${attributes.class || 'uk-accordion'}`} uk-accordion="">
+            {numberBadge}
+            <div className="uk-component-label absolute top-1 right-1 bg-yellow-600 text-white text-xs px-2 py-0.5 rounded">accordion</div>
+            <li className="uk-open">
+              <a className="uk-accordion-title" href="#">Accordion Item</a>
+              <div className="uk-accordion-content">
+                {element.content || 'Accordion content...'}
+              </div>
+            </li>
+          </ul>
+        );
+
+      case 'uk-tab':
+        return (
+          <ul {...commonProps} className={`${commonProps.className} ${attributes.class || ''}`} uk-tab="">
+            {numberBadge}
+            <li className="uk-active"><a href="#">Tab 1</a></li>
+            <li><a href="#">Tab 2</a></li>
+            <li><a href="#">Tab 3</a></li>
+          </ul>
+        );
+
       default:
+        // Handle any uk-* prefixed components generically
+        if (element.elementType.startsWith('uk-')) {
+          return (
+            <div {...commonProps} className={`${commonProps.className} ${attributes.class || element.elementType}`}>
+              {numberBadge}
+              <div className="uk-component-label absolute top-1 right-1 bg-gray-600 text-white text-xs px-2 py-0.5 rounded">{element.elementType.replace('uk-', '')}</div>
+              {element.content && <span dangerouslySetInnerHTML={{ __html: element.content }} />}
+              {elements.filter(e => e.parentId === element.id).sort((a, b) => a.order - b.order).map(renderElement)}
+            </div>
+          );
+        }
         return (
           <div {...commonProps}>
             <span className="text-slate-400 text-sm">{element.elementType}</span>

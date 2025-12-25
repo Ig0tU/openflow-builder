@@ -1,0 +1,558 @@
+{
+  "type": "layout",
+  "children": [
+    {
+      "type": "section",
+      "props": {
+        "style": "default",
+        "width": "default",
+        "padding": "default"
+      },
+      "children": [
+        {
+          "type": "row",
+          "props": {
+            "column_gap": "default",
+            "row_gap": "default"
+          },
+          "children": [
+            {
+              "type": "column",
+              "props": {
+                "width_default": "1-1"
+              },
+              "children": [
+                {
+                  "type": "section",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "#0a0a0b",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "#0a0a0b",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#0a0a0b",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "headline",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-2xlarge",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Nexus Dashboard",
+                    "title_element": "h2"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "A next-generation platform to manage your digital universe with elegance and power."
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Analytics Overview"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "image",
+                  "props": {
+                    "margin": "default",
+                    "src": "https://image.pollinations.ai/prompt/abstract%20data%20visualization%20chart%20with%20purple%20and%20blue%20gradients?seed=685795&width=1024&height=600&nologo=true",
+                    "alt": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Quick Actions"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "button",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "rgba(142, 45, 226, 0.5)",
+                    "margin": "default",
+                    "padding": "default",
+                    "text": "New Project",
+                    "style": "primary"
+                  }
+                },
+                {
+                  "type": "button",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "rgba(74, 0, 224, 0.5)",
+                    "margin": "default",
+                    "padding": "default",
+                    "text": "Invite Team",
+                    "style": "primary"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Recent Activity"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Project Alpha"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Updated 2 hours ago by Alex"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Team Sync"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Scheduled for tomorrow at 10 AM"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "New Feature"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "AI Integration module released"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Quick Actions"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#0a0a0b",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "button",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "rgba(142, 45, 226, 0.5)",
+                    "margin": "default",
+                    "padding": "default",
+                    "text": "New Project",
+                    "style": "primary"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "A next-generation platform to manage your digital universe with elegance and power."
+                  }
+                },
+                {
+                  "type": "headline",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-2xlarge",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Nexus Dashboard",
+                    "title_element": "h2"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Recent Activity"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Project Alpha"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "button",
+                  "props": {
+                    "title_color": "#ffffff",
+                    "background_color": "rgba(74, 0, 224, 0.5)",
+                    "margin": "default",
+                    "padding": "default",
+                    "text": "Invite Team",
+                    "style": "primary"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Scheduled for tomorrow at 10 AM"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "AI Integration module released"
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Team Sync"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#a0a0a0",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Updated 2 hours ago by Alex"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.03)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "New Feature"
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "image",
+                  "props": {
+                    "margin": "default",
+                    "src": "https://image.pollinations.ai/prompt/abstract%20data%20visualization%20chart%20with%20purple%20and%20blue%20gradients?seed=364365&width=1024&height=600&nologo=true",
+                    "alt": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "#f8fafc",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "section",
+                  "props": {
+                    "background_color": "rgba(255, 255, 255, 0.05)",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": ""
+                  }
+                },
+                {
+                  "type": "text",
+                  "props": {
+                    "text_align": "center",
+                    "title_style": "heading-small",
+                    "title_color": "#ffffff",
+                    "margin": "default",
+                    "padding": "default",
+                    "content": "Analytics Overview"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

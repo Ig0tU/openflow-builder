@@ -13,7 +13,7 @@ import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function ProjectsDashboard() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
   const [, setLocation] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -158,8 +158,8 @@ export default function ProjectsDashboard() {
                     rows={3}
                   />
                 </div>
-                <Button 
-                  onClick={handleCreateProject} 
+                <Button
+                  onClick={handleCreateProject}
                   disabled={createProject.isPending}
                   className="w-full h-11 shadow-sm"
                 >
@@ -181,8 +181,8 @@ export default function ProjectsDashboard() {
         {projects && projects.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card 
-                key={project.id} 
+              <Card
+                key={project.id}
                 className="bg-white border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-200 group"
               >
                 {/* Project Thumbnail */}
@@ -193,7 +193,7 @@ export default function ProjectsDashboard() {
                     <Layout className="w-16 h-16 text-gray-300" />
                   )}
                 </div>
-                
+
                 {/* Project Info */}
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
@@ -205,13 +205,13 @@ export default function ProjectsDashboard() {
                     </p>
                   )}
                   <div className="text-xs text-gray-500 mb-5">
-                    Updated {new Date(project.updatedAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric', 
-                      year: 'numeric' 
+                    Updated {new Date(project.updatedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
                     })}
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="flex gap-2">
                     <Link href={`/builder/${project.id}`} className="flex-1">

@@ -1,0 +1,76 @@
+//
+// Component: Overlay
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@overlay-default-backdrop-filter:               ~'';
+@overlay-primary-backdrop-filter:               ~'';
+
+@internal-overlay-default-backdrop-filter:      ~'';
+@internal-overlay-primary-backdrop-filter:      ~'';
+
+
+// Component
+// ========================================================================
+
+.hook-overlay() {}
+
+
+// Icon
+// ========================================================================
+
+.hook-overlay-icon() {}
+
+
+// Style modifiers
+// ========================================================================
+
+// Filter
+.hook-overlay-default() when not (@overlay-default-backdrop-filter = ~'') and (@internal-overlay-default-backdrop-filter = ~'') {
+    backdrop-filter: @overlay-default-backdrop-filter;
+    -webkit-backdrop-filter: @overlay-default-backdrop-filter;
+}
+
+// Url
+.hook-overlay-default() when (@overlay-default-backdrop-filter = ~'') and not (@internal-overlay-default-backdrop-filter = ~'') {
+    backdrop-filter: url("@{internal-overlay-default-backdrop-filter}");
+    -webkit-backdrop-filter: url("@{internal-overlay-default-backdrop-filter}");
+}
+
+// Both
+.hook-overlay-default() when not (@overlay-default-backdrop-filter = ~'') and not (@internal-overlay-default-backdrop-filter = ~'') {
+    backdrop-filter: @overlay-default-backdrop-filter url("@{internal-overlay-default-backdrop-filter}");
+    -webkit-backdrop-filter: @overlay-default-backdrop-filter url("@{internal-overlay-default-backdrop-filter}");
+}
+
+// Filter
+.hook-overlay-primary() when not (@overlay-primary-backdrop-filter = ~'') and (@internal-overlay-primary-backdrop-filter = ~'') {
+    backdrop-filter: @overlay-primary-backdrop-filter;
+    -webkit-backdrop-filter: @overlay-primary-backdrop-filter;
+}
+
+// Url
+.hook-overlay-primary() when (@overlay-primary-backdrop-filter = ~'') and not (@internal-overlay-primary-backdrop-filter = ~'') {
+    backdrop-filter: url("@{internal-overlay-primary-backdrop-filter}");
+    -webkit-backdrop-filter: url("@{internal-overlay-primary-backdrop-filter}");
+}
+
+// Both
+.hook-overlay-primary() when not (@overlay-primary-backdrop-filter = ~'') and not (@internal-overlay-primary-backdrop-filter = ~'') {
+    backdrop-filter: @overlay-primary-backdrop-filter url("@{internal-overlay-primary-backdrop-filter}");
+    -webkit-backdrop-filter: @overlay-primary-backdrop-filter url("@{internal-overlay-primary-backdrop-filter}");
+}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-overlay-misc() {}

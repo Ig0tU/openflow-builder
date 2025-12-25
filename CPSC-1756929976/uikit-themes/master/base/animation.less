@@ -1,0 +1,83 @@
+//
+// Component: Animation
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@internal-glitch-text-shadow:                   2px;
+@internal-glitch-text-shadow-color-1:           @global-primary-background;
+@internal-glitch-text-shadow-color-2:           @global-secondary-background;
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-animation-misc() when (@internal-link-muted-hover-mode = glitch),
+                            (@internal-link-text-hover-mode = glitch),
+                            (@internal-link-heading-hover-mode = glitch),
+                            (@internal-heading-small-mode = glitch),
+                            (@internal-heading-medium-mode = glitch),
+                            (@internal-heading-large-mode = glitch),
+                            (@internal-heading-xlarge-mode = glitch),
+                            (@internal-heading-2xlarge-mode = glitch),
+                            (@internal-heading-3xlarge-mode = glitch),
+                            (@internal-button-default-hover-mode = glitch),
+                            (@internal-button-primary-hover-mode = glitch),
+                            (@internal-button-secondary-hover-mode = glitch),
+                            (@internal-button-text-hover-mode = glitch),
+                            (@internal-icon-button-hover-mode = glitch),
+                            (@internal-marker-hover-mode = glitch),
+                            (@internal-slidenav-hover-mode = glitch),
+                            (@internal-dotnav-item-hover-mode = glitch),
+                            (@internal-totop-hover-mode = glitch),
+                            (@internal-nav-default-item-hover-mode = glitch),
+                            (@internal-nav-primary-item-hover-mode = glitch),
+                            (@internal-subnav-item-hover-mode = glitch),
+                            (@internal-subnav-pill-item-hover-mode = glitch),
+                            (@internal-tab-item-hover-mode = glitch),
+                            (@internal-iconnav-item-hover-mode = glitch),
+                            (@internal-thumbnav-item-hover-mode = glitch),
+                            (@internal-navbar-nav-item-hover-mode = glitch),
+                            (@internal-pagination-item-hover-mode = glitch) {
+
+    @keyframes uk-glitch-text-shadow {
+        0% { text-shadow: -@internal-glitch-text-shadow -@internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-1, @internal-glitch-text-shadow @internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-2; }
+        25% { text-shadow: @internal-glitch-text-shadow -@internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-1, -@internal-glitch-text-shadow @internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-2; }
+        50% { text-shadow: -@internal-glitch-text-shadow @internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-1, @internal-glitch-text-shadow -@internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-2; }
+        75% { text-shadow: @internal-glitch-text-shadow @internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-1, -@internal-glitch-text-shadow -@internal-glitch-text-shadow 0 @internal-glitch-text-shadow-color-2; }
+        100% { text-shadow: none; }
+    }
+
+    @keyframes uk-glitch-opacity {
+        0% { opacity: 0; }
+        20% { opacity: 1; }
+        40% { opacity: 0.2; }
+        60% { opacity: 1; }
+    }
+
+    @keyframes uk-glitch-skew {
+        0% { transform: skewX(-15deg); }
+        20% { transform: skewX(15deg); }
+        40% { transform: skewX(-15deg); }
+        60% { transform: skewX(15deg); }
+        80% { transform: skewX(-15deg); }
+        100% { transform: skewX(0deg); }
+    }
+
+    @keyframes uk-glitch-color {
+        0% { filter: saturate(80); }
+        20% { filter: invert(1); }
+        40% { filter: hue-rotate(180deg) saturate(10); }
+        60% { filter: hue-rotate(-180deg); }
+        80% { filter: invert(.8) hue-rotate(180deg) saturate(10); }
+        100% { filter: invert(0) hue-rotate(0deg) saturate(1); }
+    }
+
+}

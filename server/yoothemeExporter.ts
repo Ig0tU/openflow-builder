@@ -9,7 +9,7 @@ import type { Element, Page, Project } from '../drizzle/schema';
 type YOOthemeElementType =
     | 'layout' | 'section' | 'row' | 'column'
     | 'headline' | 'text' | 'button' | 'image' | 'divider'
-    | 'grid' | 'gallery' | 'list' | 'accordion' | 'switcher';
+    | 'grid' | 'gallery' | 'list' | 'accordion' | 'switcher' | 'video';
 
 interface YOOthemeProps {
     [key: string]: any;

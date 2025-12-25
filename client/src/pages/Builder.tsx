@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Layout, Save, Download, Upload, Sparkles, Undo2, Redo2, Monitor, Tablet, Smartphone, Settings2 } from "lucide-react";
+import { Layout, Save, Download, Upload, Sparkles, Undo2, Redo2, Monitor, Tablet, Smartphone, Settings2, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
@@ -11,20 +11,30 @@ import ElementLibrary from "@/components/builder/ElementLibrary";
 import PropertyPanel from "@/components/builder/PropertyPanel";
 import AIAssistant from "@/components/builder/AIAssistant";
 import PagesPanel from "@/components/builder/PagesPanel";
+import ExportDialog from "@/components/builder/ExportDialog";
 
 type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 
 export default function Builder() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
 
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
+  const [selectedElements, setSelectedElements] = useState<{
+    id: number;
+    number: number;
+    type: string;
+    content: string;
+  }[]>([]);
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [showAIAssistant, setShowAIAssistant] = useState(true);
   const [currentPageId, setCurrentPageId] = useState<number | null>(null);
   const [history, setHistory] = useState<any[]>([]);
+
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: project, isLoading: projectLoading } = trpc.projects.get.useQuery(
     { id: parseInt(projectId!) },
@@ -68,6 +78,50 @@ export default function Builder() {
     }
   }, [pages, currentPageId]);
 
+  // History tracking for Undo/Redo
+  useEffect(() => {
+    if (elements && elements.length > 0) {
+      const currentState = JSON.stringify(elements);
+      const lastState = history[historyIndex] ? JSON.stringify(history[historyIndex]) : null;
+
+      if (currentState !== lastState) {
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(elements);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      }
+    }
+  }, [elements]); // heavy but necessary for deep comparison
+
+  // Live element sync via SSE
+  useEffect(() => {
+    if (!currentPageId || !isAuthenticated) return;
+
+    const eventSource = new EventSource(`/api/stream/elements/${currentPageId}`, {
+      withCredentials: true,
+    });
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.action && ['create', 'update', 'delete', 'clear'].includes(data.action)) {
+          // Auto-refresh canvas when elements change
+          refetchElements();
+        }
+      } catch (e) {
+        // Ignore parse errors (e.g., heartbeats)
+      }
+    };
+
+    eventSource.onerror = () => {
+      // Silently retry on error (EventSource auto-reconnects)
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [currentPageId, isAuthenticated, refetchElements]);
+
   if (loading || projectLoading || pagesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -109,10 +163,8 @@ export default function Builder() {
     });
   };
 
-  const handleExport = async () => {
-    const format = prompt('Export format:\n- html\n- nextjs\n- wordpress\n- hostinger\n- vercel\n- netlify\n- yootheme (Joomla)', 'html') as 'html' | 'nextjs' | 'wordpress' | 'hostinger' | 'vercel' | 'netlify' | 'yootheme' | null;
-    if (!format) return;
-
+  const handleExport = async (format: 'html' | 'nextjs' | 'wordpress' | 'hostinger' | 'vercel' | 'netlify' | 'yootheme') => {
+    setIsExporting(true);
     try {
       // YOOtheme Pro export for Joomla
       if (format === 'yootheme') {
@@ -153,6 +205,8 @@ export default function Builder() {
       toast.success(`Exported ${result.files.length} file(s) for ${format}!`);
     } catch (error) {
       toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -168,6 +222,42 @@ export default function Builder() {
       setHistoryIndex(historyIndex + 1);
       toast.info("Redo");
     }
+  };
+
+  // Multi-select element picker handlers
+  const handleElementClick = (elementId: number, event: React.MouseEvent) => {
+    // Only handle Ctrl+Click for multi-select
+    if (!event.ctrlKey && !event.metaKey) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Find element data
+    const element = elements?.find(el => el.id === elementId);
+    if (!element) return;
+
+    // Check if already selected
+    const existingIndex = selectedElements.findIndex(sel => sel.id === elementId);
+
+    if (existingIndex >= 0) {
+      // Deselect: remove from array and renumber
+      const newSelection = selectedElements.filter(sel => sel.id !== elementId);
+      // Renumber remaining elements
+      setSelectedElements(newSelection.map((sel, idx) => ({ ...sel, number: idx + 1 })));
+    } else {
+      // Select: add with next number
+      const nextNumber = selectedElements.length + 1;
+      setSelectedElements([...selectedElements, {
+        id: elementId,
+        number: nextNumber,
+        type: element.elementType,
+        content: element.content || '',
+      }]);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedElements([]);
   };
 
   const handleImportYOOtheme = () => {
@@ -286,6 +376,17 @@ export default function Builder() {
               </Button>
             </div>
 
+            {/* Refresh Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refetchElements()}
+              className="text-gray-600 hover:text-gray-900"
+              title="Refresh canvas"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+
             <div className="h-6 w-px bg-gray-200 mx-2" />
 
             {/* AI Assistant Toggle + Settings */}
@@ -336,7 +437,7 @@ export default function Builder() {
             <Button
               variant="default"
               size="sm"
-              onClick={handleExport}
+              onClick={() => setShowExportDialog(true)}
               className="shadow-sm"
             >
               <Download className="w-4 h-4 mr-2" />
@@ -378,11 +479,13 @@ export default function Builder() {
             >
               <CanvasEditor
                 pageId={currentPageId}
-                elements={elements || []}
+                elements={history.length > 0 && historyIndex >= 0 ? history[historyIndex] : (elements || [])}
                 selectedElementId={selectedElementId}
                 onElementSelect={setSelectedElementId}
                 onElementsChange={refetchElements}
                 viewportMode={viewportMode}
+                selectedElements={selectedElements}
+                onElementClick={handleElementClick}
               />
             </div>
           </div>
@@ -396,6 +499,8 @@ export default function Builder() {
               currentPageId={currentPageId}
               onClose={() => setShowAIAssistant(false)}
               onElementsGenerated={refetchElements}
+              selectedElements={selectedElements}
+              onClearSelection={clearSelection}
             />
           ) : (
             <PropertyPanel
@@ -405,7 +510,15 @@ export default function Builder() {
             />
           )}
         </div>
+
       </div>
-    </div>
+
+      <ExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
+    </div >
   );
 }

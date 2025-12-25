@@ -1,0 +1,58 @@
+//
+// Component: Form Range
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@internal-form-range-thumb-background-image:   ~'';
+
+
+// Component
+// ========================================================================
+
+.hook-form-range() {}
+
+
+// Track
+// ========================================================================
+
+.hook-form-range-track() {}
+
+.hook-form-range-track-focus() {}
+
+
+// Thumb
+// ========================================================================
+
+.hook-form-range-thumb() when not (@internal-form-range-thumb-background-image = ~'') {
+    background-color: transparent !important;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+.hook-form-range-thumb() when not (@internal-form-range-thumb-background-image = ~'') and not (@form-range-thumb-background = transparent) {
+    .svg-fill(@internal-form-range-thumb-background-image, "#000", @form-range-thumb-background);
+}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-form-range-misc() {}
+
+
+// Inverse
+// ========================================================================
+
+.hook-inverse-form-range-track() {}
+.hook-inverse-form-range-track-focus() {}
+.hook-inverse-form-range-thumb() when not (@internal-form-range-thumb-background-image = ~'') and not (@inverse-form-range-thumb-background = transparent) {
+    .svg-fill(@internal-form-range-thumb-background-image, "#000", @inverse-form-range-thumb-background);
+}

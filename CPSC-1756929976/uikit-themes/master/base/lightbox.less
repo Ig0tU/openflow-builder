@@ -1,0 +1,41 @@
+//
+// Component: Lightbox
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@lightbox-backdrop-filter:                      ~'';
+
+
+// Component
+// ========================================================================
+
+.hook-lightbox() when not (@lightbox-backdrop-filter = ~'') {
+    backdrop-filter: @lightbox-backdrop-filter;
+    -webkit-backdrop-filter: @lightbox-backdrop-filter;
+}
+
+
+// Item
+// ========================================================================
+
+.hook-lightbox-item() {}
+
+
+// Caption
+// ========================================================================
+
+.hook-lightbox-caption() {}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-lightbox-misc() {}

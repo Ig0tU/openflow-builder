@@ -144,7 +144,7 @@ export class AIService {
     // Only Ollama Cloud supports streaming currently
     if (this.provider === 'ollama-cloud') {
       const url = this.baseUrl || 'https://ollama.com';
-      const model = this.model || 'qwen3-coder:480b-cloud';
+      const model = this.model || 'devstral-2:123b-cloud';
 
       const response = await axios.post(
         `${url}/api/chat`,
@@ -411,8 +411,9 @@ export class AIService {
 
     // Default to Ollama Cloud API
     const url = this.baseUrl || 'https://ollama.com';
-    // Best cloud models: qwen3-coder:480b-cloud (coding), qwen3-vl:235b-cloud (vision)
-    const model = this.model || 'qwen3-coder:480b-cloud';
+    // Cloud models: nemotron-3-nano:30b-cloud, gemini-3-flash-preview:cloud, devstral-small-2:24b-cloud
+    // devstral-2:123b-cloud (coding), ministral-3:cloud, qwen3-vl:cloud (vision)
+    const model = this.model || 'devstral-2:123b-cloud';
 
     const result = await circuitBreakers.gemini.execute(async () => {
       const retryResult = await withRetry(

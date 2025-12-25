@@ -1,0 +1,191 @@
+//
+// Global
+//
+
+@global-inverse-color:        #051122;
+@global-background:           #051122;
+@global-muted-background:     #111C2B;
+@global-primary-background:   #98FC79;
+@global-secondary-background: #1A3E5A;
+@global-link-color:           #98FC79;
+
+//
+// Alert
+//
+
+@alert-primary-color: rgba(0, 0, 0, 0.89);
+@alert-danger-color:  #fff;
+
+//
+// Base
+//
+
+@internal-base-body-overlay-image:             "../../master-quantum-flares/images/styles/dark-green/base-body-overlay.gif";
+@internal-base-body-overlay-opacity:           0.3;
+@internal-base-body-overlay-background-repeat: no-repeat, repeat;
+@internal-base-body-overlay-background-size:   auto, 100px;
+@internal-base-body-overlay-blend-mode:        plus-lighter;
+@internal-base-body-overlay-image-2:           "../../master-quantum-flares/images/styles/dark-green/base-body-overlay-2.gif";
+
+//
+// Button
+//
+
+@button-default-color:                    @global-primary-background;
+@button-default-hover-color:              @global-primary-background;
+@button-default-active-color:             fade(@global-primary-background, 70%);
+@button-primary-color:                    #000;
+@internal-button-secondary-glow-gradient: conic-gradient(from 0, rgba(26, 62, 90, 0.9), rgba(26, 62, 90, 0.9));
+
+//
+// Card
+//
+
+@card-default-hover-background:   #18283d;
+@card-primary-color:              @global-background;
+@card-primary-color-mode:         dark;
+@card-primary-hover-background:   #befdab;
+@card-secondary-hover-background: #204c6e;
+
+//
+// Dropbar
+//
+
+@dropbar-background: fade(@global-muted-background, 90%);
+
+//
+// Dropdown
+//
+
+@dropdown-background: fade(@global-muted-background, 90%);
+
+//
+// Form
+//
+
+@form-range-track-background:       rgba(26, 62, 90, 0.65);
+@form-range-track-focus-background: rgba(26, 62, 90, 0.65);
+@form-radio-background:             rgba(26, 62, 90, 0.65);
+@form-radio-focus-background:       #152335;
+
+//
+// Icon
+//
+
+@icon-link-hover-color:    #657280;
+@icon-button-hover-color:  @global-background;
+@icon-button-active-color: @global-background;
+
+//
+// Inverse
+//
+
+@inverse-global-border:                           rgba(5, 18, 36, 0.78);
+@inverse-global-primary-background:               @global-primary-background;
+@inverse-badge-background:                        @global-primary-background;
+@inverse-badge-color:                             #000;
+@inverse-base-link-color:                         #44D019;
+@inverse-button-primary-color:                    #000;
+@inverse-button-primary-hover-color:              rgba(0, 0, 0, 0.7);
+@inverse-button-primary-active-color:             rgba(0, 0, 0, 0.41);
+@inverse-button-secondary-color:                  #fff;
+@inverse-button-secondary-hover-color:            rgba(255, 255, 255, 0.76);
+@inverse-button-secondary-active-color:           rgba(255, 255, 255, 0.48);
+@internal-inverse-button-primary-glow-gradient:   conic-gradient(from 0, @global-primary-background, @global-primary-background);
+@internal-inverse-button-secondary-glow-gradient: conic-gradient(from 0, @global-secondary-background, @global-secondary-background);
+@inverse-card-badge-color:                        #fff;
+@inverse-divider-icon-color:                      rgb(5, 18, 36);
+@inverse-divider-icon-line-border:                rgba(5, 18, 36, 0.78);
+@inverse-divider-small-border:                    #051224;
+@inverse-divider-vertical-border:                 #051224;
+@inverse-form-focus-border:                       @global-primary-background;
+@inverse-form-radio-checked-icon-color:           #000;
+@inverse-icon-link-hover-color:                   @global-primary-background;
+@inverse-icon-button-background:                  @global-primary-background;
+@inverse-icon-button-color:                       #000;
+@inverse-icon-button-hover-background:            rgba(26, 62, 90, 0.68);
+@inverse-icon-button-hover-color:                 #fff;
+@inverse-icon-button-active-color:                #000;
+@inverse-iconnav-item-hover-color:                @global-primary-background;
+@inverse-label-color:                             #000;
+@inverse-marker-hover-background:                 @global-primary-background;
+@inverse-marker-hover-color:                      #000;
+@inverse-nav-default-item-active-color:           @global-primary-background;
+@inverse-nav-primary-item-active-color:           @global-primary-background;
+@inverse-nav-secondary-item-hover-color:          @global-primary-background;
+@inverse-nav-secondary-sublist-item-hover-color:  @global-primary-background;
+@inverse-nav-secondary-item-active-color:         @global-primary-background;
+@inverse-nav-secondary-subtitle-active-color:     @global-primary-background;
+@inverse-search-default-focus-border:             @global-primary-background;
+@inverse-subnav-item-active-color:                @global-primary-background;
+@inverse-table-hover-row-background:              rgba(98, 103, 166, 0.18);
+
+//
+// Label
+//
+
+@label-warning-color: @global-background;
+@label-danger-color:  #fff;
+
+//
+// Marker
+//
+
+@marker-hover-background: @global-primary-background;
+
+//
+// Navbar
+//
+
+@navbar-background:          fade(@global-background, 80%);
+@navbar-dropdown-background: fade(@global-muted-background,90%);
+
+//
+// Notification
+//
+
+@notification-message-primary-color:      @global-background;
+@notification-message-primary-color-mode: dark;
+
+//
+// Offcanvas
+//
+
+@offcanvas-bar-background: #0F1C2F;
+
+//
+// Overlay
+//
+
+@overlay-primary-color-mode: dark;
+
+//
+// Progress
+//
+
+@progress-background: #0F1C2F;
+
+//
+// Section
+//
+
+@section-primary-color-mode:          dark;
+@internal-section-secondary-gradient: radial-gradient(circle closest-corner at 20% 40%, rgba(152, 252, 121, 0.2), transparent 100%), radial-gradient(circle closest-corner at 85% 20%, rgba(152, 252, 121, 0.1), transparent 100%);
+
+//
+// Subnav
+//
+
+@subnav-pill-item-hover-background: rgba(255, 255, 255, 0.07);
+
+//
+// Tile
+//
+
+@tile-primary-color-mode: dark;
+
+//
+// Tooltip
+//
+
+@tooltip-background: #111C2B;

@@ -1,0 +1,102 @@
+//
+// Component: Heading
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@internal-heading-small-mode:                        none; // none, glitch
+@internal-heading-medium-mode:                       none; // none, glitch
+@internal-heading-large-mode:                        none; // none, glitch
+@internal-heading-xlarge-mode:                       none; // none, glitch
+@internal-heading-2xlarge-mode:                      none; // none, glitch
+@internal-heading-3xlarge-mode:                      none; // none, glitch
+
+@internal-heading-glitch-animation:                 uk-glitch-text-shadow;
+@internal-heading-glitch-duration:                  0.65s;
+
+
+// Component
+// ========================================================================
+
+.hook-heading-small() when (@internal-heading-small-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+.hook-heading-medium() when (@internal-heading-medium-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+.hook-heading-large() when (@internal-heading-large-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+.hook-heading-xlarge() when (@internal-heading-xlarge-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+.hook-heading-2xlarge() when (@internal-heading-2xlarge-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+.hook-heading-3xlarge() when (@internal-heading-3xlarge-mode = glitch) {
+    animation: @internal-heading-glitch-duration ease both infinite;
+    animation-name: @internal-heading-glitch-animation;
+}
+
+
+// Divider
+// ========================================================================
+
+.hook-heading-divider() {}
+
+
+// Bullet
+// ========================================================================
+
+.hook-heading-bullet() {}
+
+
+// Line
+// ========================================================================
+
+.hook-heading-line() {}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-heading-misc() {}
+
+
+// Inverse
+// ========================================================================
+
+.hook-inverse-heading-small() {}
+
+.hook-inverse-heading-medium() {}
+
+.hook-inverse-heading-large() {}
+
+.hook-inverse-heading-xlarge() {}
+
+.hook-inverse-heading-2xlarge() {}
+
+.hook-inverse-heading-3xlarge() {}
+
+.hook-inverse-heading-divider() {}
+
+.hook-inverse-heading-bullet() {}
+
+.hook-inverse-heading-line() {}

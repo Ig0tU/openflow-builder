@@ -1,5 +1,8 @@
+
 import * as db from './db';
 import type { Element } from '../drizzle/schema';
+import { processNanoCommands } from './nanoAgent';
+import { notifyElementChange } from './_core/streaming';
 
 /**
  * AI Builder Actions Service
@@ -12,7 +15,8 @@ export type BuilderAction =
   | { type: 'deleteElement'; data: DeleteElementAction }
   | { type: 'selectElement'; data: SelectElementAction }
   | { type: 'updateStyle'; data: UpdateStyleAction }
-  | { type: 'updateContent'; data: UpdateContentAction };
+  | { type: 'updateContent'; data: UpdateContentAction }
+  | { type: 'deletePageElements'; data: DeletePageElementsAction };
 
 export type CreateElementAction = {
   pageId: number;
@@ -52,26 +56,85 @@ export type UpdateContentAction = {
   range?: { start: number; end: number }; // For modifying specific characters
 };
 
+export type DeletePageElementsAction = {
+  pageId: number;
+};
+
 /**
  * Execute a builder action
  */
 export async function executeBuilderAction(action: BuilderAction, userId: number): Promise<any> {
-  switch (action.type) {
-    case 'createElement':
-      return await createElementAction(action.data, userId);
-    case 'updateElement':
-      return await updateElementAction(action.data, userId);
-    case 'deleteElement':
-      return await deleteElementAction(action.data, userId);
-    case 'selectElement':
-      return await selectElementAction(action.data, userId);
-    case 'updateStyle':
-      return await updateStyleAction(action.data, userId);
-    case 'updateContent':
-      return await updateContentAction(action.data, userId);
-    default:
-      throw new Error(`Unknown action type`);
+  // Unwrap if action is in result format (from AI echoing conversation history)
+  let actualAction: any = action;
+  if ((action as any).action && (action as any).action.type) {
+    console.warn('[AIBuilder] Unwrapping nested action from result format');
+    actualAction = (action as any).action;
   }
+
+  // Defensive check for malformed actions from AI
+  if (!actualAction || !actualAction.type) {
+    console.error('[AIBuilder] Malformed action received:', JSON.stringify(action));
+    throw new Error(`Invalid action: missing 'type' field. Received: ${JSON.stringify(action)}`);
+  }
+
+  const actionType = actualAction.type.toLowerCase();
+
+  // Action Aliasing / Fuzzy Matching
+  if (['createelement', 'addelement', 'newelement', 'create'].includes(actionType)) {
+    return await createElementAction(actualAction.data as any, userId);
+  }
+
+  if (['updateelement', 'modifyelement', 'changeelement', 'editelement', 'update'].includes(actionType)) {
+    return await updateElementAction(actualAction.data as any, userId);
+  }
+
+  if (['deleteelement', 'removeelement', 'eraseelement', 'delete'].includes(actionType)) {
+    return await deleteElementAction(actualAction.data as any, userId);
+  }
+
+  if (['deletepageelements', 'clearpage', 'wipepage', 'resetpage', 'clearcanvas', 'wipecanvas', 'deleteall'].includes(actionType)) {
+    return await deletePageElementsAction(actualAction.data as any, userId);
+  }
+
+  if (['selectelement', 'findelement', 'select'].includes(actionType)) {
+    return await selectElementAction(actualAction.data as any, userId);
+  }
+
+  if (['updatestyle', 'changestyle', 'setstyle', 'style'].includes(actionType)) {
+    return await updateStyleAction(actualAction.data as any, userId);
+  }
+
+  if (['updatecontent', 'changecontent', 'setcontent', 'text'].includes(actionType)) {
+    return await updateContentAction(actualAction.data as any, userId);
+  }
+
+  console.warn(`Unknown action type: ${actualAction.type}`);
+  throw new Error(`Unknown action type: ${actualAction.type}`);
+}
+
+/**
+ * Delete all elements on a page
+ */
+async function deletePageElementsAction(data: DeletePageElementsAction, userId: number): Promise<{ success: boolean }> {
+  // Verify user has access to the page
+  const page = await db.getPageById(data.pageId);
+  if (!page) throw new Error('Page not found');
+
+  const project = await db.getProjectById(page.projectId);
+  if (!project || project.userId !== userId) {
+    throw new Error('Unauthorized');
+  }
+
+  // Delete all elements
+  const elements = await db.getPageElements(data.pageId);
+  for (const element of elements) {
+    await db.deleteElement(element.id);
+  }
+
+  // Notify connected clients of the change
+  notifyElementChange(data.pageId, 'clear');
+
+  return { success: true };
 }
 
 /**
@@ -92,7 +155,31 @@ async function createElementAction(data: CreateElementAction, userId: number): P
 
   // Default styles based on element type
   const defaultStyles = getDefaultStyles(data.elementType, data.position);
-  const mergedStyles = { ...defaultStyles, ...(data.styles || {}) };
+  let mergedStyles = { ...defaultStyles, ...(data.styles || {}) };
+
+  // Process Nano commands in styles
+  for (const key of Object.keys(mergedStyles)) {
+    if (typeof mergedStyles[key] === 'string') {
+      mergedStyles[key] = await processNanoCommands(mergedStyles[key]);
+    }
+  }
+
+  // HARDENING: Force flow layout for AI generations (no explicit position)
+  if (!data.position) {
+    delete mergedStyles.position;
+    delete mergedStyles.left;
+    delete mergedStyles.top;
+    mergedStyles.display = mergedStyles.display === 'none' ? 'none' : (mergedStyles.display || 'block');
+    mergedStyles.position = 'relative'; // Ensure stacking context
+  }
+
+  // Process Nano commands in content
+  let content = data.content;
+  if (content) {
+    content = await processNanoCommands(content);
+  } else {
+    content = getDefaultContent(data.elementType);
+  }
 
   // Create the element
   const element = await db.createElement({
@@ -100,10 +187,13 @@ async function createElementAction(data: CreateElementAction, userId: number): P
     elementType: data.elementType,
     order: elements.length,
     parentId: data.parentId,
-    content: data.content || getDefaultContent(data.elementType),
+    content,
     styles: mergedStyles,
     attributes: data.attributes || {},
   });
+
+  // Notify connected clients
+  notifyElementChange(data.pageId, 'create');
 
   return element;
 }
@@ -124,10 +214,27 @@ async function updateElementAction(data: UpdateElementAction, userId: number): P
     throw new Error('Unauthorized');
   }
 
+  // Process Nano commands in content
+  let content = data.content;
+  if (content) {
+    content = await processNanoCommands(content);
+  }
+
+  // Process Nano commands in styles
+  let styles = data.styles;
+  if (styles) {
+    styles = { ...styles }; // Clone
+    for (const key of Object.keys(styles)) {
+      if (typeof styles[key] === 'string') {
+        styles[key] = await processNanoCommands(styles[key] as string);
+      }
+    }
+  }
+
   // Update the element
   await db.updateElement(data.elementId, {
-    content: data.content,
-    styles: data.styles,
+    content,
+    styles,
     attributes: data.attributes,
   });
 
@@ -191,9 +298,13 @@ async function updateStyleAction(data: UpdateStyleAction, userId: number): Promi
 
   // Merge new style with existing styles
   const currentStyles = (element.styles as Record<string, string>) || {};
+
+  // Process Nano commands in value
+  const processedValue = await processNanoCommands(data.value);
+
   const updatedStyles = {
     ...currentStyles,
-    [data.property]: data.value,
+    [data.property]: processedValue,
   };
 
   await db.updateElement(data.elementId, {
@@ -228,6 +339,11 @@ async function updateContentAction(data: UpdateContentAction, userId: number): P
     newContent = before + data.content + after;
   }
 
+  // Process Nano commands
+  if (newContent) {
+    newContent = await processNanoCommands(newContent);
+  }
+
   await db.updateElement(data.elementId, {
     content: newContent,
   });
@@ -251,8 +367,8 @@ function getDefaultStyles(type: string, position?: { x: number; y: number }): Re
   if (position) {
     return {
       position: 'absolute',
-      left: `${position.x}px`,
-      top: `${position.y}px`,
+      left: `${position.x} px`,
+      top: `${position.y} px`,
     };
   }
 

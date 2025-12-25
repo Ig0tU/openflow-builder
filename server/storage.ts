@@ -1,18 +1,20 @@
 // Preconfigured storage helpers for Manus WebDev templates
 // Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Falls back to local filesystem if credentials are missing
 
 import { ENV } from './_core/env';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
-type StorageConfig = { baseUrl: string; apiKey: string };
+type StorageConfig = { baseUrl: string; apiKey: string } | null;
 
 function getStorageConfig(): StorageConfig {
   const baseUrl = ENV.forgeApiUrl;
   const apiKey = ENV.forgeApiKey;
 
   if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
+    console.warn('[Storage] Forge API credentials missing, using local filesystem mode');
+    return null; // Local mode
   }
 
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
@@ -72,8 +74,30 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+  const config = getStorageConfig();
   const key = normalizeKey(relKey);
+
+  // Local filesystem mode
+  if (!config) {
+    const uploadDir = join(process.cwd(), 'uploads');
+    const filePath = join(uploadDir, key);
+    const fileDir = filePath.substring(0, filePath.lastIndexOf('/'));
+
+    // Create directories if they don't exist
+    mkdirSync(fileDir, { recursive: true });
+
+    // Write file
+    const buffer = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
+    writeFileSync(filePath, buffer);
+
+    // Return local file URL
+    const url = `/uploads/${key}`;
+    console.log(`[Storage] Saved locally: ${filePath} -> ${url}`);
+    return { key, url };
+  }
+
+  // Cloud storage mode
+  const { baseUrl, apiKey } = config;
   const uploadUrl = buildUploadUrl(baseUrl, key);
   const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
   const response = await fetch(uploadUrl, {

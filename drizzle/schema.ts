@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, boolean, index } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -35,7 +35,9 @@ export const projects = mysqlTable("projects", {
   }>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("userId_idx").on(table.userId),
+}));
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
@@ -55,7 +57,9 @@ export const pages = mysqlTable("pages", {
   }>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  projectIdIdx: index("projectId_idx").on(table.projectId),
+}));
 
 export type Page = typeof pages.$inferSelect;
 export type InsertPage = typeof pages.$inferInsert;
@@ -75,7 +79,10 @@ export const elements = mysqlTable("elements", {
   responsiveStyles: json("responsiveStyles").$type<any>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  pageIdIdx: index("pageId_idx").on(table.pageId),
+  parentIdIdx: index("parentId_idx").on(table.parentId),
+}));
 
 export type Element = typeof elements.$inferSelect;
 export type InsertElement = typeof elements.$inferInsert;
@@ -140,7 +147,10 @@ export const assets = mysqlTable("assets", {
   folder: varchar("folder", { length: 255 }), // for organization
   tags: json("tags").$type<string[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("userId_idx").on(table.userId),
+  projectIdIdx: index("projectId_idx").on(table.projectId),
+}));
 
 export type Asset = typeof assets.$inferSelect;
 export type InsertAsset = typeof assets.$inferInsert;

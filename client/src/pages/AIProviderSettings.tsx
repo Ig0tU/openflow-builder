@@ -57,7 +57,7 @@ const OPENROUTER_FREE_MODELS = [
 ];
 
 export default function AIProviderSettings() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth({ redirectOnUnauthenticated: true });
   const [configs, setConfigs] = useState<Record<ProviderName, { apiKey: string; baseUrl: string; model: string }>>({
     gemini: { apiKey: '', baseUrl: '', model: '' },
     grok: { apiKey: '', baseUrl: '', model: '' },

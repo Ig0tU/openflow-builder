@@ -1,0 +1,93 @@
+//
+// Component: Link
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@link-heading-text-decoration:                  inherit;
+
+@internal-link-muted-hover-mode:                ~''; // glitch
+@internal-link-muted-hover-glitch-animation:    uk-glitch-skew, uk-glitch-opacity;
+@internal-link-muted-hover-glitch-duration:     0.2s;
+
+@internal-link-text-hover-mode:                 ~''; // glitch
+@internal-link-text-hover-glitch-animation:     uk-glitch-skew, uk-glitch-opacity;
+@internal-link-text-hover-glitch-duration:      0.2s;
+
+@internal-link-heading-hover-mode:              ~''; // glitch
+@internal-link-heading-hover-glitch-animation:  uk-glitch-skew, uk-glitch-opacity;
+@internal-link-heading-hover-glitch-duration:   0.2s;
+
+
+// Muted
+// ========================================================================
+
+.hook-link-muted() {}
+
+.hook-link-muted-hover() {}
+
+// Glitch
+.hook-link-muted-hover() when (@internal-link-muted-hover-mode = glitch) {
+    animation: @internal-link-muted-hover-glitch-duration ease both;
+    animation-name: @internal-link-muted-hover-glitch-animation;
+}
+
+
+// Text
+// ========================================================================
+
+.hook-link-text() {}
+
+.hook-link-text-hover() {}
+
+// Glitch
+.hook-link-text-hover() when (@internal-link-text-hover-mode = glitch) {
+    animation: @internal-link-text-hover-glitch-duration ease both;
+    animation-name: @internal-link-text-hover-glitch-animation;
+}
+
+
+// Heading
+// ========================================================================
+
+.hook-link-heading() when not (@link-heading-text-decoration = inherit) {
+    text-decoration: @link-heading-text-decoration;
+}
+
+.hook-link-heading-hover() {}
+
+// Glitch
+.hook-link-heading-hover() when (@internal-link-heading-hover-mode = glitch) {
+    animation: @internal-link-heading-hover-glitch-duration ease both;
+    animation-name: @internal-link-heading-hover-glitch-animation;
+}
+
+
+// Reset
+// ========================================================================
+
+.hook-link-reset() {}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-link-misc() {}
+
+
+// Inverse
+// ========================================================================
+
+.hook-inverse-link-muted() {}
+.hook-inverse-link-muted-hover() {}
+
+.hook-inverse-link-text-hover() {}
+
+.hook-inverse-link-heading-hover() {}

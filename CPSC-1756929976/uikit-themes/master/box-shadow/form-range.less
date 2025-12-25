@@ -1,0 +1,68 @@
+//
+// Component: Form Range
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@form-range-track-box-shadow:                   none;
+@form-range-track-focus-box-shadow:             none;
+
+@form-range-thumb-box-shadow:                   none;
+
+
+// Component
+// ========================================================================
+
+.hook-form-range() {}
+
+
+// Track
+// ========================================================================
+
+.hook-form-range-track() when not (@form-range-track-box-shadow = none) {
+    box-shadow: @form-range-track-box-shadow;
+}
+
+.hook-form-range-track-focus() when not (@form-range-track-focus-box-shadow = none) {
+    box-shadow: @form-range-track-focus-box-shadow;
+}
+
+
+// Thumb
+// ========================================================================
+
+.hook-form-range-thumb() when not (@form-range-thumb-box-shadow = none) {
+    box-shadow: @form-range-thumb-box-shadow;
+}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-form-range-misc() {}
+
+
+// Inverse
+// ========================================================================
+
+@inverse-form-range-track-box-shadow:          none;
+@inverse-form-range-track-focus-box-shadow:    none;
+
+@inverse-form-range-thumb-box-shadow:          none;
+
+.hook-inverse-form-range-track() when not (@form-range-track-box-shadow = none) {
+    box-shadow: @inverse-form-range-track-box-shadow;
+}
+.hook-inverse-form-range-track-focus() when not (@form-range-track-focus-box-shadow = none) {
+    box-shadow: @inverse-form-range-track-focus-box-shadow;
+}
+.hook-inverse-form-range-thumb() when not (@form-range-thumb-box-shadow = none) {
+    box-shadow: @inverse-form-range-thumb-box-shadow;
+}

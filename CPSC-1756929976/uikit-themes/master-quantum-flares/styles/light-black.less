@@ -1,0 +1,220 @@
+//
+// Global
+//
+
+@global-color:                rgba(0, 0, 0, 0.8);
+@global-emphasis-color:       #000;
+@global-inverse-color:        #fff;
+@global-link-color:           #A3A3A3;
+@global-muted-color:          rgba(0, 0, 0, 0.55);
+@global-link-hover-color:     #000;
+@global-background:           #fff;
+@global-muted-background:     rgba(137, 137, 137, 0.13);
+@global-primary-background:   #000;
+@global-secondary-background: #525252;
+
+//
+// Theme
+//
+
+@theme-page-container-color-mode: dark;
+
+//
+// Alert
+//
+
+@alert-background:    #F0F0F0;
+@alert-success-color: @global-emphasis-color;
+@alert-warning-color: @global-emphasis-color;
+@alert-danger-color:  @global-background;
+
+//
+// Base
+//
+
+@internal-base-body-overlay-image:      "../../master-quantum-flares/images/styles/light-black/base-body-overlay.gif";
+@internal-base-body-overlay-opacity:    0.1;
+@internal-base-body-overlay-blend-mode: darken;
+
+//
+// Button
+//
+
+@button-secondary-color:                  @global-background;
+@button-secondary-hover-color:            @global-inverse-color;
+@button-secondary-active-color:           rgba(255, 255, 255, 0.82);
+@internal-button-secondary-glow-gradient: conic-gradient(from 0, @global-secondary-background, @global-secondary-background);
+
+//
+// Card
+//
+
+@card-default-background:         #F0F0F0;
+@card-default-hover-background:   #D5D5D5;
+@card-default-color-mode:         dark;
+@card-primary-color-mode:         light;
+@card-primary-hover-background:   #2F2F2F;
+@card-secondary-background:       @global-secondary-background;
+@card-secondary-color:            @global-background;
+@card-secondary-color-mode:       light;
+@card-secondary-hover-background: #353535;
+
+//
+// Dropbar
+//
+
+@dropbar-background: rgba(255, 255, 255, 0.8);
+@dropbar-color-mode: dark;
+
+//
+// Dropdown
+//
+
+@dropdown-dropbar-margin:            0;
+@dropdown-dropbar-padding-top:       ~'calc(@{dropdown-padding} - 5px)';
+@dropdown-dropbar-large-padding-top: ~'calc(@{dropdown-large-padding} - 5px)';
+@dropdown-background:                rgba(229, 229, 229, 0.6);
+@dropdown-color:                     #1D1D1D;
+@dropdown-color-mode:                dark;
+
+//
+// Form
+//
+
+@form-range-track-background:       rgba(95, 95, 95, 0.28);
+@form-range-track-focus-background: rgba(108, 108, 108, 0.65);
+@form-radio-background:             rgba(95, 95, 95, 0.28);
+
+//
+// Icon
+//
+
+@icon-link-hover-color:         @global-muted-color;
+@icon-link-active-color:        @global-muted-color;
+@icon-button-active-background: @global-secondary-background;
+
+//
+// Inverse
+//
+
+@inverse-global-color-mode:                       light;
+@inverse-button-secondary-color:                  @global-background;
+@internal-inverse-button-primary-glow-gradient:   conic-gradient(from 0, @global-background, @global-background);
+@internal-inverse-button-secondary-glow-gradient: conic-gradient(from 0, @global-secondary-background, @global-secondary-background);
+@inverse-divider-icon-color:                      @global-background;
+@inverse-divider-icon-line-border:                rgba(255, 255, 255, 0.23);
+@inverse-divider-small-border:                    @global-background;
+@inverse-divider-vertical-border:                 @global-background;
+@inverse-icon-button-background:                  @global-background;
+@inverse-icon-button-hover-color:                 @global-emphasis-color;
+@inverse-marker-background:                       @global-background;
+@inverse-marker-hover-background:                 #8b8b8b;
+@inverse-marker-hover-color:                      @global-background;
+@inverse-navbar-toggle-color:                     @global-inverse-color;
+@inverse-search-default-focus-border:             @global-background;
+
+//
+// Label
+//
+
+@label-success-color: @global-emphasis-color;
+@label-warning-color: @global-emphasis-color;
+@label-danger-color:  @global-background;
+
+//
+// Lightbox
+//
+
+@lightbox-color-mode: dark;
+
+//
+// Modal
+//
+
+@modal-dialog-background: rgba(240, 240, 240, 0.6);
+
+//
+// Nav
+//
+
+@nav-default-item-color:             rgba(0, 0, 0, 0.7);
+@nav-default-subtitle-color:         rgba(0, 0, 0, 0.7);
+@nav-secondary-item-color:           rgba(76, 76, 76, 0.8);
+@nav-secondary-item-hover-color:     @global-emphasis-color;
+@nav-secondary-subtitle-color:       rgba(76, 76, 76, 0.8);
+@nav-secondary-subtitle-hover-color: @global-emphasis-color;
+@nav-secondary-header-color:         #4C4C4C;
+@nav-secondary-sublist-item-color:   rgba(76, 76, 76, 0.8);
+
+//
+// Navbar
+//
+
+@navbar-background:          fade(@global-background, 60%);
+@navbar-color-mode:          dark;
+@navbar-dropdown-background: rgba(229, 229, 229, 0.6);
+@navbar-dropdown-color-mode: dark;
+
+//
+// Notification
+//
+
+@notification-message-primary-color-mode: light;
+@notification-message-success-color:      @global-emphasis-color;
+@notification-message-success-color-mode: dark;
+@notification-message-warning-color:      @global-emphasis-color;
+@notification-message-danger-color:       @global-background;
+
+//
+// Offcanvas
+//
+
+@offcanvas-bar-color-mode: dark;
+
+//
+// Overlay
+//
+
+@overlay-default-background:                   fade(@global-background, 55%);
+@overlay-default-color-mode:                   dark;
+@overlay-primary-background:                   fade(@global-primary-background, 20%);
+@overlay-primary-color-mode:                   light;
+
+//
+// Progress
+//
+
+@progress-background: rgba(137, 137, 137, 0.32);
+
+//
+// Section
+//
+
+@section-default-color-mode:          dark;
+@section-muted-color-mode:            dark;
+@section-primary-color-mode:          light;
+@section-secondary-color-mode:        light;
+@internal-section-secondary-gradient: none;
+
+//
+// Table
+//
+
+@table-row-active-background: rgba(95, 95, 95, 0.14);
+
+//
+// Tile
+//
+
+@tile-default-color-mode:   dark;
+@tile-muted-color-mode:     dark;
+@tile-primary-color-mode:   light;
+@tile-secondary-color-mode: light;
+
+
+//
+// Tooltip
+//
+
+@tooltip-background: #1D1D1D;
+@tooltip-color:      @global-background;

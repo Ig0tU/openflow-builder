@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Send, Sparkles, Mic, MicOff, Zap, X } from "lucide-react";
+import { Loader2, Send, Sparkles, Mic, MicOff, Zap, X, Paperclip, FileImage, FileCode } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +12,14 @@ interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   actions?: any[];
+  attachments?: Attachment[];
+}
+
+interface Attachment {
+  url: string;
+  fileType: 'image' | 'code';
+  mimeType: string;
+  name: string;
 }
 
 interface AIAssistantProps {
@@ -22,16 +30,48 @@ interface AIAssistantProps {
   onElementUpdate?: (elementId: number, updates: any) => void;
   onElementDelete?: (elementId: number) => void;
   onElementsGenerated: () => void;
+  selectedElements?: { id: number; number: number; type: string; content: string }[];
+  onClearSelection?: () => void;
 }
 
-export default function AIAssistant({ 
-  projectId, 
-  currentPageId, 
+// Available models per provider
+const AVAILABLE_MODELS: Record<string, { id: string; name: string; size?: string }[]> = {
+  'ollama-cloud': [
+    { id: 'devstral-2:123b-cloud', name: 'Devstral 2', size: '123B' },
+    { id: 'devstral-small-2:24b-cloud', name: 'Devstral Small 2', size: '24B' },
+    { id: 'gemini-3-flash-preview:9b-cloud', name: 'Gemini 3 Flash Preview', size: '9B' },
+    { id: 'nemotron-3-nano:30b-cloud', name: 'Nemotron 3 Nano', size: '30B' },
+    { id: 'qwen3-vl:235b-cloud', name: 'Qwen3 VL (Vision)', size: '235B' },
+    { id: 'ministral-3:8b-cloud', name: 'Ministral 3', size: '8B' },
+  ],
+  'openrouter': [
+    { id: 'mistralai/devstral-2512:free', name: 'Devstral 2512', size: 'Free' },
+    { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash', size: 'Free' },
+    { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek V3', size: 'Free' },
+    { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', size: 'Free' },
+    { id: 'qwen/qwen-2.5-72b-instruct:free', name: 'Qwen 2.5 72B', size: 'Free' },
+  ],
+  'gemini': [
+    { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Exp)', size: 'Fast' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', size: 'Pro' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', size: 'Fast' },
+  ],
+  'grok': [
+    { id: 'grok-2-1212', name: 'Grok 2', size: 'Latest' },
+    { id: 'grok-beta', name: 'Grok Beta', size: 'Beta' },
+  ],
+};
+
+export default function AIAssistant({
+  projectId,
+  currentPageId,
   onClose,
-  onElementCreate, 
-  onElementUpdate, 
+  onElementCreate,
+  onElementUpdate,
   onElementDelete,
-  onElementsGenerated 
+  onElementsGenerated,
+  selectedElements = [],
+  onClearSelection
 }: AIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -40,10 +80,13 @@ export default function AIAssistant({
     },
   ]);
   const [input, setInput] = useState("");
-  const [provider, setProvider] = useState<"gemini" | "grok" | "openrouter" | "ollama-cloud">("gemini");
+  const [provider, setProvider] = useState<"gemini" | "grok" | "openrouter" | "ollama-cloud">("ollama-cloud");
+  const [model, setModel] = useState(AVAILABLE_MODELS['ollama-cloud'][0].id);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [conversationId, setConversationId] = useState<number | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
   const { data: providerConfigs } = trpc.aiProviders.list.useQuery();
@@ -61,10 +104,16 @@ export default function AIAssistant({
     },
   });
 
+  const uploadForAI = trpc.assets.uploadForAI.useMutation({
+    onError: (error) => {
+      toast.error(`Upload failed: ${error.message}`);
+    },
+  });
+
   const chat = trpc.aiBuilder.chat.useMutation({
     onSuccess: (response) => {
       setConversationId(response.conversationId);
-      
+
       setMessages((prev) => [
         ...prev,
         {
@@ -120,6 +169,14 @@ export default function AIAssistant({
     }
   }, []);
 
+  // Reset model when provider changes
+  useEffect(() => {
+    const models = AVAILABLE_MODELS[provider];
+    if (models && models.length > 0) {
+      setModel(models[0].id);
+    }
+  }, [provider]);
+
   const toggleVoiceRecognition = () => {
     if (!recognitionRef.current) {
       toast.error('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
@@ -138,6 +195,49 @@ export default function AIAssistant({
         console.error('Failed to start recognition:', error);
         toast.error('Failed to start voice recognition');
       }
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0]; // Only handle one file at a time for now
+
+    // Determine file type
+    const fileType = file.type.startsWith('image/') ? 'image' : 'code';
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+
+        toast.info(`Uploading ${file.name}...`);
+        const result = await uploadForAI.mutateAsync({
+          name: file.name,
+          fileData: base64,
+          mimeType: file.type,
+          fileType,
+        });
+
+        setAttachments(prev => [...prev, {
+          url: result.url,
+          fileType: result.fileType,
+          mimeType: result.mimeType,
+          name: file.name,
+        }]);
+
+        toast.success(`${file.name} attached`);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File upload error:', error);
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -162,9 +262,11 @@ export default function AIAssistant({
       message: input,
       conversationId,
       provider,
+      model, // Pass selected model
     });
 
     setInput("");
+    setAttachments([]); // Clear attachments after sending
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -236,6 +338,23 @@ export default function AIAssistant({
             </SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Model Selection */}
+        <Select
+          value={model}
+          onValueChange={(v) => setModel(v)}
+        >
+          <SelectTrigger className="w-full bg-white border-gray-300 h-9 mt-2">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent className="bg-white border-gray-200 max-h-60">
+            {AVAILABLE_MODELS[provider]?.map((m) => (
+              <SelectItem key={m.id} value={m.id}>
+                {m.name} {m.size && <span className="text-gray-500 text-xs">({m.size})</span>}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Messages */}
@@ -248,13 +367,12 @@ export default function AIAssistant({
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-lg px-4 py-2.5 ${
-                    message.role === "user"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : message.role === "system"
+                  className={`max-w-[85%] rounded-lg px-4 py-2.5 ${message.role === "user"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : message.role === "system"
                       ? "bg-gray-50 text-gray-700 border border-gray-200"
                       : "bg-white text-gray-900 border border-gray-200 shadow-sm"
-                  }`}
+                    }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                   {message.actions && message.actions.length > 0 && (
@@ -282,9 +400,84 @@ export default function AIAssistant({
         </ScrollArea>
       </div>
 
+      {/* Selected Elements Panel */}
+      {selectedElements.length > 0 && (
+        <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-blue-900">
+              Selected Elements ({selectedElements.length})
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onClearSelection}
+              className="h-6 text-xs text-blue-700 hover:text-blue-900"
+            >
+              Clear All
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {selectedElements.map(el => (
+              <div
+                key={el.id}
+                className="flex items-center gap-1.5 bg-white border border-blue-300 rounded-md px-2.5 py-1 shadow-sm"
+              >
+                <span className="font-bold text-blue-600 text-sm">[{el.number}]</span>
+                <span className="text-xs text-gray-700 font-medium">{el.type}</span>
+                {el.content && (
+                  <span className="text-xs text-gray-500 max-w-[80px] truncate">
+                    "{el.content.slice(0, 20)}"
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-blue-700 mt-2">
+            💡 Use numbers in commands: "make 1 red", "delete 2 and 3"
+          </p>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-4 border-t border-gray-200">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp,text/html,text/css,text/javascript,application/javascript,text/plain"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Attachment previews */}
+        {attachments.length > 0 && (
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {attachments.map((att, index) => (
+              <div key={index} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm">
+                {att.fileType === 'image' ? <FileImage className="w-4 h-4 text-blue-600" /> : <FileCode className="w-4 h-4 text-blue-600" />}
+                <span className="text-blue-800 font-medium">{att.name}</span>
+                <button
+                  onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2 mb-2">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="border-gray-300"
+            title="Attach image or code file"
+            disabled={chat.isPending}
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Button
             size="icon"
             variant={isListening ? "default" : "outline"}
@@ -315,7 +508,7 @@ export default function AIAssistant({
           <p className="text-xs text-amber-600">Please select a page to start building</p>
         ) : (
           <p className="text-xs text-gray-500">
-            💡 Try: "Add a hero section" or "Change button to blue"
+            💡 Try: "Add a hero section" or attach an image/code file
           </p>
         )}
       </div>

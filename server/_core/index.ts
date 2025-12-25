@@ -33,11 +33,19 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Serve uploaded files from local storage
+  app.use('/uploads', express.static('uploads'));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // SSE streaming endpoints under /api/stream
   const { registerStreamRoutes } = await import("./streaming");
   registerStreamRoutes(app);
+
+  // Rate limiting middleware
+  const { apiRateLimiter, aiRateLimiter } = await import("../rateLimit");
+  app.use("/api/trpc", apiRateLimiter);
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -46,6 +54,11 @@ async function startServer() {
       createContext,
     })
   );
+
+  // Preview server for multi-page navigation
+  const { registerPreviewRoutes } = await import("../previewServer");
+  registerPreviewRoutes(app);
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

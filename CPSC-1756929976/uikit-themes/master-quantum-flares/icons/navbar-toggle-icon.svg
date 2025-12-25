@@ -1,0 +1,37 @@
+<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .uk-navbar-toggle-icon svg > [class*='line-'] {
+            transition: 0.4s ease-in-out;
+            transition-property: transform, opacity;
+        }
+
+        .uk-navbar-toggle-icon svg > .line-1,
+        .uk-navbar-toggle-icon svg > .line-2,
+        .uk-navbar-toggle-icon svg > .line-3 { transform-origin: right; }
+
+        .uk-navbar-toggle-icon svg > .line-2 { transition-delay: .1s; }
+        .uk-navbar-toggle-icon svg > .line-3 { transition-delay: .2s; }
+
+        .uk-navbar-toggle-icon svg > .line-close-3,
+        .uk-navbar-toggle-icon svg > .line-close-4 {
+            transition-delay: .1s;
+            transform-origin: center;
+            opacity: 0;
+        }
+
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-1,
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-2,
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-3 { transform: scaleX(0); }
+
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-close-3,
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-close-4 { opacity: 1; }
+
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-close-3 { transform: rotate(45deg); }
+        .uk-navbar-toggle-animate[aria-expanded="true"] svg > .line-close-4 { transform: rotate(225deg); }
+    </style>
+    <line class="line-1" fill="none" stroke="#000" stroke-width="2" y1="13" x2="26" y2="13" />
+    <line class="line-2" fill="none" stroke="#000" stroke-width="2" x1="9.631" y1="19.783" x2="26" y2="19.783" />
+    <line class="line-3" fill="none" stroke="#000" stroke-width="2" y1="6.217" x2="26" y2="6.217" />
+    <line class="line-close-3" fill="none" stroke="#000" stroke-width="2" y1="13" x2="26" y2="13" />
+    <line class="line-close-4" fill="none" stroke="#000" stroke-width="2" x1="13" x2="13" y2="26" />
+</svg>

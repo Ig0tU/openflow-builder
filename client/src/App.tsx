@@ -21,6 +21,7 @@ function Router() {
       <Route path="/api-settings" component={APISettings} />
       <Route path="/projects" component={ProjectsDashboard} />
       <Route path="/builder/:projectId" component={Builder} />
+      <Route path="/settings/ai" component={AIProviderSettings} />
       <Route path="/settings/ai-providers" component={AIProviderSettings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

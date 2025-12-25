@@ -1,0 +1,204 @@
+//
+// Component: Search
+//
+// ========================================================================
+
+
+// Variables
+// ========================================================================
+
+//
+// New
+//
+
+@search-default-backdrop-filter:                    ~'';
+@search-navbar-backdrop-filter:                     ~'';
+@search-medium-backdrop-filter:                     ~'';
+@search-large-backdrop-filter:                      ~'';
+
+@search-navbar-color:                               ~'';
+@search-medium-color:                               ~'';
+@search-large-color:                                ~'';
+
+@search-navbar-placeholder-color:                   ~'';
+@search-medium-placeholder-color:                   ~'';
+@search-large-placeholder-color:                    ~'';
+
+@search-navbar-icon-color:                          ~'';
+@search-medium-icon-color:                          ~'';
+@search-large-icon-color:                           ~'';
+
+
+// Component
+// ========================================================================
+
+.hook-search-input() {
+    transition: 0.2s ease-in-out;
+    transition-property: color, background-color, border-color, box-shadow;
+}
+
+// Icon
+// ========================================================================
+
+.hook-search-icon() when not (@search-default-backdrop-filter = ~''),
+                         not (@search-navbar-backdrop-filter = ~''),
+                         not (@search-large-backdrop-filter = ~'') { z-index: 1; }
+
+
+// Default modifiers
+// ========================================================================
+
+.hook-search-default-input() when not (@search-default-backdrop-filter = ~'') {
+    backdrop-filter: @search-default-backdrop-filter;
+    -webkit-backdrop-filter: @search-default-backdrop-filter;
+}
+
+.hook-search-default-input-focus() {}
+
+
+// Navbar modifiers
+// ========================================================================
+
+.hook-search-navbar-input() when not (@search-navbar-backdrop-filter = ~'') {
+    backdrop-filter: @search-navbar-backdrop-filter;
+    -webkit-backdrop-filter: @search-navbar-backdrop-filter;
+}
+
+.hook-search-navbar-input() when not (@search-navbar-color = ~'') {
+    color: @search-navbar-color;
+}
+
+.hook-search-navbar-input() when not (@search-navbar-placeholder-color = ~'') {
+    &::placeholder { color: @search-navbar-placeholder-color; }
+}
+
+.hook-search-navbar-input-focus() {}
+
+
+// Medium modifiers
+// ========================================================================
+
+.hook-search-medium-input() when not (@search-medium-backdrop-filter = ~'') {
+    backdrop-filter: @search-medium-backdrop-filter;
+    -webkit-backdrop-filter: @search-medium-backdrop-filter;
+}
+
+.hook-search-medium-input() when not (@search-medium-color = ~'') {
+    color: @search-medium-color;
+}
+
+.hook-search-medium-input() when not (@search-medium-placeholder-color = ~'') {
+    &::placeholder { color: @search-medium-placeholder-color; }
+}
+
+.hook-search-medium-input-focus() {}
+
+
+// Large modifiers
+// ========================================================================
+
+.hook-search-large-input() when not (@search-large-backdrop-filter = ~'') {
+    backdrop-filter: @search-large-backdrop-filter;
+    -webkit-backdrop-filter: @search-large-backdrop-filter;
+}
+
+.hook-search-large-input() when not (@search-large-color = ~'') {
+    color: @search-large-color;
+}
+
+.hook-search-large-input() when not (@search-large-placeholder-color = ~'') {
+    &::placeholder { color: @search-large-placeholder-color; }
+}
+
+.hook-search-large-input-focus() {}
+
+
+// Toggle
+// ========================================================================
+
+.hook-search-toggle() {}
+
+.hook-search-toggle-hover() {}
+
+
+// Miscellaneous
+// ========================================================================
+
+.hook-search-misc() when not (@search-navbar-icon-color = ~'') {
+
+    .uk-search-navbar .uk-search-icon,
+    .uk-search-navbar .uk-search-icon:hover { color: @search-navbar-icon-color; }
+
+}
+
+.hook-search-misc() when not (@search-medium-icon-color = ~'') {
+
+    .uk-search-medium .uk-search-icon,
+    .uk-search-medium .uk-search-icon:hover { color: @search-medium-icon-color; }
+
+}
+
+.hook-search-misc() when not (@search-large-icon-color = ~'') {
+
+    .uk-search-large .uk-search-icon,
+    .uk-search-large .uk-search-icon:hover { color: @search-large-icon-color; }
+
+}
+
+
+// Inverse
+// ========================================================================
+
+@inverse-search-navbar-color:                       ~'';
+@inverse-search-medium-color:                       ~'';
+@inverse-search-large-color:                        ~'';
+
+@inverse-search-navbar-placeholder-color:           ~'';
+@inverse-search-medium-placeholder-color:           ~'';
+@inverse-search-large-placeholder-color:            ~'';
+
+@inverse-search-navbar-icon-color:                  ~'';
+@inverse-search-medium-icon-color:                  ~'';
+@inverse-search-large-icon-color:                   ~'';
+
+.hook-inverse-search-default-input() {}
+.hook-inverse-search-default-input-focus() {}
+
+.hook-inverse-search-navbar-input() when not (@inverse-search-navbar-color = ~'') {
+    color: @inverse-search-navbar-color;
+}
+.hook-inverse-search-navbar-input() when not (@inverse-search-navbar-placeholder-color = ~'') {
+    &::placeholder { color: @inverse-search-navbar-placeholder-color; }
+}
+.hook-inverse-search-navbar-input-focus() {}
+.hook-inverse() when not (@inverse-search-navbar-icon-color = ~'') {
+    .uk-search-navbar .uk-search-icon,
+    .uk-search-navbar .uk-search-icon:hover { color: @inverse-search-navbar-icon-color; }
+}
+
+.hook-inverse-search-medium-input() when not (@inverse-search-medium-color = ~'') {
+    color: @inverse-search-medium-color;
+}
+.hook-inverse-search-medium-input() when not (@inverse-search-medium-placeholder-color = ~'') {
+    &::placeholder { color: @inverse-search-medium-placeholder-color; }
+}
+.hook-inverse-search-medium-input-focus() {}
+.hook-inverse() when not (@inverse-search-medium-icon-color = ~'') {
+    .uk-search-medium .uk-search-icon,
+    .uk-search-medium .uk-search-icon:hover { color: @inverse-search-medium-icon-color; }
+}
+
+.hook-inverse-search-large-input() when not (@inverse-search-large-color = ~'') {
+    color: @inverse-search-large-color;
+}
+.hook-inverse-search-large-input() when not (@inverse-search-large-placeholder-color = ~'') {
+    &::placeholder { color: @inverse-search-large-placeholder-color; }
+}
+.hook-inverse-search-large-input-focus() {}
+.hook-inverse() when not (@inverse-search-large-icon-color = ~'') {
+    .uk-search-large .uk-search-icon,
+    .uk-search-large .uk-search-icon:hover { color: @inverse-search-large-icon-color; }
+}
+
+.hook-inverse-search-toggle() {}
+.hook-inverse-search-toggle-hover() {}

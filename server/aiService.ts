@@ -136,7 +136,7 @@ export class AIService {
     validateAIMessages(request.messages);
 
     const url = this.baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
-    const model = this.model || 'gemini-pro';
+    const model = this.model || 'gemini-2.0-flash-exp';
 
     // Convert messages to Gemini format
     const contents = request.messages
@@ -216,7 +216,7 @@ export class AIService {
     validateAIMessages(request.messages);
 
     const url = this.baseUrl || 'https://api.x.ai/v1';
-    const model = this.model || 'grok-beta';
+    const model = this.model || 'grok-2-1212';
 
     const result = await circuitBreakers.gemini.execute(async () => {
       const retryResult = await withRetry(
@@ -346,7 +346,7 @@ export class AIService {
 
     validateAIMessages(request.messages);
 
-    const model = this.model || 'llama2';
+    const model = this.model || 'llama3.3:70b';
 
     const result = await circuitBreakers.gemini.execute(async () => {
       const retryResult = await withRetry(

@@ -42,11 +42,12 @@ const PROVIDERS: { name: ProviderName; label: string; description: string; icon:
 export default function AIProviderSettings() {
   const { user, loading, isAuthenticated } = useAuth();
   const [configs, setConfigs] = useState<Record<ProviderName, { apiKey: string; baseUrl: string; model: string }>>({
-    gemini: { apiKey: '', baseUrl: '', model: '' },
-    grok: { apiKey: '', baseUrl: '', model: '' },
-    openrouter: { apiKey: '', baseUrl: '', model: '' },
-    'ollama-cloud': { apiKey: '', baseUrl: '', model: '' },
+    gemini: { apiKey: '', baseUrl: '', model: 'gemini-2.0-flash-exp' },
+    grok: { apiKey: '', baseUrl: '', model: 'grok-2-1212' },
+    openrouter: { apiKey: '', baseUrl: '', model: 'anthropic/claude-3.5-sonnet' },
+    'ollama-cloud': { apiKey: '', baseUrl: '', model: 'llama3.3:70b' },
   });
+  const [savingProvider, setSavingProvider] = useState<ProviderName | null>(null);
 
   const { data: savedConfigs, isLoading: configsLoading, refetch } = trpc.aiProviders.list.useQuery(
     undefined,
@@ -56,10 +57,12 @@ export default function AIProviderSettings() {
   const saveConfig = trpc.aiProviders.save.useMutation({
     onSuccess: () => {
       toast.success("AI provider settings saved!");
+      setSavingProvider(null);
       refetch();
     },
     onError: (error) => {
       toast.error(`Failed to save settings: ${error.message}`);
+      setSavingProvider(null);
     },
   });
 
@@ -111,6 +114,7 @@ export default function AIProviderSettings() {
 
   const handleSave = (provider: ProviderName) => {
     const config = configs[provider];
+    setSavingProvider(provider);
     saveConfig.mutate({
       provider,
       apiKey: config.apiKey || undefined,
@@ -236,10 +240,10 @@ export default function AIProviderSettings() {
                         [provider.name]: { ...config, model: e.target.value }
                       })}
                       placeholder={
-                        provider.name === 'gemini' ? 'gemini-pro' :
-                        provider.name === 'grok' ? 'grok-beta' :
-                        provider.name === 'openrouter' ? 'anthropic/claude-3.5-sonnet' :
-                        'llama2'
+                        provider.name === 'gemini' ? 'gemini-2.0-flash-exp' :
+                          provider.name === 'grok' ? 'grok-2-1212' :
+                            provider.name === 'openrouter' ? 'anthropic/claude-3.5-sonnet' :
+                              'llama3.3:70b'
                       }
                       className="bg-slate-800 border-slate-700 text-white mt-2"
                     />
@@ -247,11 +251,11 @@ export default function AIProviderSettings() {
 
                   <Button
                     onClick={() => handleSave(provider.name)}
-                    disabled={saveConfig.isPending}
+                    disabled={savingProvider === provider.name}
                     className="w-full"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {saveConfig.isPending ? 'Saving...' : 'Save Configuration'}
+                    {savingProvider === provider.name ? 'Saving...' : 'Save Configuration'}
                   </Button>
                 </div>
               </Card>

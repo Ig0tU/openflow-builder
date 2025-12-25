@@ -477,6 +477,9 @@ export async function getConversationById(conversationId: number): Promise<AiCon
   return result[0];
 }
 
+// Alias for consistency
+export const getAiConversation = getConversationById;
+
 export async function updateAiConversation(conversationId: number, updates: Partial<InsertAiConversation>): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

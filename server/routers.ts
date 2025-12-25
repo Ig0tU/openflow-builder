@@ -229,6 +229,79 @@ export const appRouter = router({
 
         return newProject;
       }),
+
+    export: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        format: z.enum(['html', 'nextjs', 'wordpress', 'hostinger', 'vercel', 'netlify']).default('html'),
+      }))
+      .query(async ({ input, ctx }) => {
+        const project = await db.getProjectById(input.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (project.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+
+        const pages = await db.getProjectPages(input.id);
+        const exportedFiles: Array<{ path: string; content: string; type: string }> = [];
+
+        const generateElementHTML = (element: any, indent = ''): string => {
+          const styles = element.styles || {};
+          const styleStr = Object.entries(styles)
+            .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
+            .join('; ');
+          const content = element.content || '';
+          const attrs = element.attributes || {};
+          const attrStr = Object.entries(attrs).filter(([k]) => k !== 'class').map(([k, v]) => `${k}="${v}"`).join(' ');
+          const className = attrs.class || '';
+
+          switch (element.elementType) {
+            case 'container': case 'div': return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${content}</div>`;
+            case 'heading': return `${indent}<h${attrs.level || '1'} class="${className}" style="${styleStr}" ${attrStr}>${content}</h${attrs.level || '1'}>`;
+            case 'text': case 'paragraph': return `${indent}<p class="${className}" style="${styleStr}" ${attrStr}>${content}</p>`;
+            case 'button': return `${indent}<button class="${className}" style="${styleStr}" ${attrStr}>${content}</button>`;
+            case 'link': return `${indent}<a href="${attrs.href || '#'}" class="${className}" style="${styleStr}" ${attrStr}>${content}</a>`;
+            case 'image': return `${indent}<img src="${content}" alt="${attrs.alt || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
+            case 'input': return `${indent}<input type="${attrs.type || 'text'}" placeholder="${attrs.placeholder || ''}" class="${className}" style="${styleStr}" ${attrStr} />`;
+            default: return `${indent}<div class="${className}" style="${styleStr}" ${attrStr}>${content}</div>`;
+          }
+        };
+
+        for (const page of pages) {
+          const elements = await db.getPageElements(page.id);
+          const elementsHTML = elements.filter(el => !el.parentId).sort((a, b) => a.order - b.order).map(el => generateElementHTML(el, '  ')).join('\n');
+          const slug = page.slug === 'index' ? 'index' : page.slug;
+
+          if (input.format === 'nextjs' || input.format === 'vercel') {
+            const jsxContent = elementsHTML.replace(/class="/g, 'className="').replace(/style="([^"]*)"/g, (_, s) => {
+              const obj = s.split(';').filter((x: string) => x.trim()).map((x: string) => {
+                const [k, v] = x.split(':').map((y: string) => y.trim());
+                return `${k.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase())}: "${v}"`;
+              }).join(', ');
+              return `style={{${obj}}}`;
+            });
+            exportedFiles.push({ path: `app/${slug === 'index' ? '' : slug + '/'}page.tsx`, content: `export default function Page() {\n  return (\n    <main>\n${jsxContent}\n    </main>\n  );\n}`, type: 'tsx' });
+          } else if (input.format === 'wordpress') {
+            exportedFiles.push({ path: `theme/${slug === 'index' ? 'index' : 'page-' + slug}.php`, content: `<?php get_header(); ?>\n<main>\n${elementsHTML}\n</main>\n<?php get_footer(); ?>`, type: 'php' });
+          } else {
+            const htmlDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${page.name}</title>\n  <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: system-ui, sans-serif; }</style>\n</head>\n<body>\n${elementsHTML}\n</body>\n</html>`;
+            const folder = input.format === 'hostinger' ? 'public_html/' : '';
+            exportedFiles.push({ path: `${folder}${slug}.html`, content: htmlDoc, type: 'html' });
+          }
+        }
+
+        // Platform config files
+        if (input.format === 'nextjs' || input.format === 'vercel') {
+          exportedFiles.push({ path: 'package.json', content: JSON.stringify({ name: project.name.toLowerCase().replace(/[^a-z0-9]/g, '-'), scripts: { dev: 'next dev', build: 'next build', start: 'next start' }, dependencies: { next: '^14.0.0', react: '^18.2.0', 'react-dom': '^18.2.0' } }, null, 2), type: 'json' });
+          exportedFiles.push({ path: 'app/layout.tsx', content: `export default function RootLayout({ children }: { children: React.ReactNode }) {\n  return <html lang="en"><body>{children}</body></html>;\n}`, type: 'tsx' });
+        }
+        if (input.format === 'vercel') exportedFiles.push({ path: 'vercel.json', content: '{"framework":"nextjs"}', type: 'json' });
+        if (input.format === 'netlify') exportedFiles.push({ path: 'netlify.toml', content: '[build]\n  publish = "."', type: 'toml' });
+        if (input.format === 'wordpress') {
+          exportedFiles.push({ path: 'theme/style.css', content: `/*\nTheme Name: ${project.name}\nVersion: 1.0\n*/`, type: 'css' });
+          exportedFiles.push({ path: 'theme/functions.php', content: `<?php\nadd_action('after_setup_theme', function() { add_theme_support('title-tag'); });\n?>`, type: 'php' });
+        }
+
+        return { project: { name: project.name }, format: input.format, files: exportedFiles };
+      }),
   }),
 
   // ============================================================================

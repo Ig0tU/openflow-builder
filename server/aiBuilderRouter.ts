@@ -63,7 +63,7 @@ export const aiBuilderRouter = router({
       }
 
       const elements = await db.getPageElements(input.pageId);
-      
+
       return {
         page,
         project,
@@ -242,7 +242,11 @@ export const aiBuilderRouter = router({
         });
       }
 
-      // Call AI with function calling capability
+      // Import AI service
+      const { createAIService } = await import('./aiService');
+      const aiService = createAIService(providerConfig);
+
+      // Build the system prompt with function calling instructions
       const systemPrompt = `You are an AI assistant that helps users build websites visually. You have access to a canvas where you can create, modify, and delete elements.
 
 Current page context:
@@ -250,22 +254,107 @@ Current page context:
 - Project: ${context.project.name}
 - Elements on canvas: ${context.elements.length}
 
-When the user asks you to modify the website, use the available functions to make changes. You can:
-- Create new elements (buttons, text, images, containers, etc.)
-- Update existing elements (change text, styles, properties)
-- Delete elements
-- Find elements by description
+Available functions you can call:
+${JSON.stringify(functions, null, 2)}
 
-Always execute actions step by step and provide clear feedback about what you're doing.`;
+When the user asks you to modify the website, respond with a JSON object containing:
+1. "message": Your friendly response explaining what you're doing
+2. "actions": An array of function calls to execute
 
-      // This is a simplified version - in production, you'd use the actual AI provider's function calling API
-      // For now, we'll return a structured response that the frontend can parse
-      
+Example response format:
+{
+  "message": "I'll create a blue button for you!",
+  "actions": [
+    {
+      "type": "createElement",
+      "data": {
+        "pageId": ${input.pageId},
+        "elementType": "button",
+        "content": "Click Me",
+        "styles": { "backgroundColor": "#3b82f6", "color": "white", "padding": "10px 20px", "borderRadius": "6px" }
+      }
+    }
+  ]
+}
+
+Action types: createElement, updateElement, deleteElement, updateStyle, updateContent
+Always include pageId: ${input.pageId} in createElement actions.
+Return ONLY valid JSON, no markdown code blocks.`;
+
+      // Call the AI
+      const aiResponse = await aiService.generate({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: input.message }
+        ],
+        temperature: 0.7,
+        maxTokens: 2048,
+      });
+
+      // Parse AI response
+      let parsedResponse: { message: string; actions: any[] } = {
+        message: aiResponse.content,
+        actions: [],
+      };
+
+      try {
+        // Try to parse as JSON
+        let jsonStr = aiResponse.content.trim();
+
+        // Remove markdown code blocks if present
+        if (jsonStr.startsWith('```json')) {
+          jsonStr = jsonStr.slice(7);
+        } else if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.slice(3);
+        }
+        if (jsonStr.endsWith('```')) {
+          jsonStr = jsonStr.slice(0, -3);
+        }
+        jsonStr = jsonStr.trim();
+
+        const parsed = JSON.parse(jsonStr);
+        if (parsed.message && Array.isArray(parsed.actions)) {
+          parsedResponse = parsed;
+        }
+      } catch {
+        // AI returned plain text - that's fine, just use as message
+        parsedResponse = {
+          message: aiResponse.content,
+          actions: [],
+        };
+      }
+
+      // Execute any actions the AI requested
+      const executedActions: any[] = [];
+      for (const action of parsedResponse.actions) {
+        try {
+          const result = await builderActions.executeBuilderAction(action, ctx.user.id);
+          executedActions.push({ action, success: true, result });
+        } catch (error) {
+          executedActions.push({
+            action,
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed'
+          });
+        }
+      }
+
+      // Update conversation with new messages
+      const existingConv = await db.getAiConversation(conversationId);
+      const existingMessages = (existingConv?.messages as any[]) || [];
+      await db.updateAiConversation(conversationId, {
+        messages: [
+          ...existingMessages,
+          { role: 'user', content: input.message },
+          { role: 'assistant', content: parsedResponse.message },
+        ],
+      });
+
       return {
         conversationId,
         response: {
-          message: "AI builder integration is ready. The AI can now operate the builder interface.",
-          actions: [],
+          message: parsedResponse.message,
+          actions: executedActions,
           context,
         },
       };

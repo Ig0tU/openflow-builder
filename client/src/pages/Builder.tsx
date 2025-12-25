@@ -17,7 +17,8 @@ type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 export default function Builder() {
   const { projectId } = useParams<{ projectId: string }>();
   const { user, loading, isAuthenticated } = useAuth();
-  
+  const utils = trpc.useUtils();
+
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [showAIAssistant, setShowAIAssistant] = useState(true);
@@ -98,8 +99,29 @@ export default function Builder() {
     });
   };
 
-  const handleExport = () => {
-    toast.info("Export functionality coming soon!");
+  const handleExport = async () => {
+    const format = prompt('Export format:\n- html\n- nextjs\n- wordpress\n- hostinger\n- vercel\n- netlify', 'html') as 'html' | 'nextjs' | 'wordpress' | 'hostinger' | 'vercel' | 'netlify' | null;
+    if (!format) return;
+
+    try {
+      const result = await utils.projects.export.fetch({ id: parseInt(projectId!), format });
+
+      for (const file of result.files) {
+        const blob = new Blob([file.content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.path.replace(/\//g, '_');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      toast.success(`Exported ${result.files.length} file(s) for ${format}!`);
+    } catch (error) {
+      toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleUndo = () => {

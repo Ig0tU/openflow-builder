@@ -153,7 +153,8 @@ export async function createLocalUser(user: {
       lastSignedIn: new Date(),
     });
 
-    return getUserByEmail(user.email) ?? null;
+    const createdUser = await getUserByEmail(user.email);
+    return createdUser ?? null;
   } catch (error) {
     console.error("[Database] Failed to create local user:", error);
     throw error;

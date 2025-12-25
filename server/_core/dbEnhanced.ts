@@ -4,7 +4,7 @@
  */
 
 import { eq, and, desc, asc, InferSelectModel } from 'drizzle-orm';
-import type { elements, pages, projects } from '../../drizzle/schema';
+import { elements, pages, projects } from '../../drizzle/schema';
 import { withTransaction, withRetryableTransaction } from './dbTransaction';
 import type { Db } from './dbTransaction';
 
@@ -113,12 +113,12 @@ export async function createElementsBatch(
       );
 
       // Check page existence
-      const pages = await txDb
+      const existingPages = await txDb
         .select({ id: pages.id })
         .from(pages)
         .where(eq(pages.id, Array.from(pageIds)[0]!));
 
-      if (pages.length === 0) {
+      if (existingPages.length === 0) {
         throw new Error('Parent page does not exist');
       }
 
@@ -308,7 +308,7 @@ export async function deleteProjectAtomically(
           .delete(elements)
           .where(eq(elements.pageId, page.id));
 
-        deletedElements += result.rowsAffected || 0;
+        deletedElements++;
       }
 
       // Delete all pages
@@ -316,7 +316,7 @@ export async function deleteProjectAtomically(
         .delete(pages)
         .where(eq(pages.projectId, projectId));
 
-      const deletedPages = pagesResult.rowsAffected || 0;
+      const deletedPages = projectPages.length;
 
       // Delete project itself
       await txDb.delete(projects).where(eq(projects.id, projectId));
@@ -369,7 +369,7 @@ export async function updateElementsBatch(
           })
           .where(eq(elements.id, update.id));
 
-        updatedCount += result.rowsAffected || 0;
+        updatedCount++;
       }
 
       return updatedCount;

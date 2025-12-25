@@ -112,9 +112,9 @@ export const UpdateProjectInputSchema = z.object({
     .max(LIMITS.PROJECT_DESCRIPTION_MAX)
     .optional(),
   thumbnail: z.string()
-    .url('Invalid thumbnail URL')
+    .url()
     .optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const DeleteProjectInputSchema = z.object({
@@ -145,7 +145,7 @@ export const CreatePageInputSchema = z.object({
     .trim()
     .regex(/^[a-z0-9-_]+$/, 'Slug must contain only lowercase letters, numbers, hyphens, and underscores'),
   isHomePage: z.boolean().default(false),
-  settings: z.record(z.unknown()).optional().default({}),
+  settings: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export const UpdatePageInputSchema = z.object({
@@ -162,7 +162,7 @@ export const UpdatePageInputSchema = z.object({
     .regex(/^[a-z0-9-_]+$/)
     .optional(),
   isHomePage: z.boolean().optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ============================================================================
@@ -180,10 +180,10 @@ export const CreateElementInputSchema = z.object({
     .max(LIMITS.ELEMENT_CONTENT_MAX, `Content must be ${LIMITS.ELEMENT_CONTENT_MAX} characters or less`)
     .nullable()
     .default(null),
-  styles: z.record(z.unknown())
+  styles: z.record(z.string(), z.unknown())
     .optional()
     .default({}),
-  attributes: z.record(z.unknown())
+  attributes: z.record(z.string(), z.unknown())
     .optional()
     .default({}),
   parentId: z.number().int().positive().nullable().default(null),
@@ -201,8 +201,8 @@ export const UpdateElementInputSchema = z.object({
     .max(LIMITS.ELEMENT_CONTENT_MAX)
     .nullable()
     .optional(),
-  styles: z.record(z.unknown()).optional(),
-  attributes: z.record(z.unknown()).optional(),
+  styles: z.record(z.string(), z.unknown()).optional(),
+  attributes: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ============================================================================
@@ -234,7 +234,7 @@ export const FileUploadInputSchema = z.object({
 export const AIGenerateWebsiteInputSchema = z.object({
   prompt: z.string()
     .min(10, 'Prompt must be at least 10 characters')
-    .max(LIMITS.AI_PROMPT_MAX, `Prompt must be ${LIMITS.AI_PROMPT_MAX} characters or less'),
+    .max(LIMITS.AI_PROMPT_MAX, `Prompt must be ${LIMITS.AI_PROMPT_MAX} characters or less`)
     .trim(),
   provider: z.enum(['gemini', 'grok', 'openrouter', 'ollama-cloud']).default('gemini'),
 });
@@ -242,7 +242,7 @@ export const AIGenerateWebsiteInputSchema = z.object({
 export const AIDetectLibraryInputSchema = z.object({
   htmlCode: z.string()
     .min(10, 'HTML code must be provided')
-    .max(LIMITS.HTML_CODE_MAX, `HTML code must be ${LIMITS.HTML_CODE_MAX} characters or less')
+    .max(LIMITS.HTML_CODE_MAX, `HTML code must be ${LIMITS.HTML_CODE_MAX} characters or less`)
     .trim(),
   provider: z.enum(['gemini', 'grok', 'openrouter', 'ollama-cloud']).default('gemini'),
 });

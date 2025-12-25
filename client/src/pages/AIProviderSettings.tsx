@@ -1,53 +1,57 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Layout, Save, Trash2, Sparkles } from "lucide-react";
+import { Layout, Save, Trash2, Key, ExternalLink, Check, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
 type ProviderName = 'gemini' | 'grok' | 'openrouter' | 'ollama-cloud';
 
-const PROVIDERS: { name: ProviderName; label: string; description: string; icon: string }[] = [
+const PROVIDERS: { name: ProviderName; label: string; description: string; defaultModel: string; docsUrl: string }[] = [
   {
     name: 'gemini',
     label: 'Google Gemini',
-    description: 'Google\'s advanced AI model with strong reasoning capabilities',
-    icon: '🔷'
+    description: 'Advanced reasoning and code generation',
+    defaultModel: 'gemini-2.0-flash-exp',
+    docsUrl: 'https://makersuite.google.com/app/apikey',
   },
   {
     name: 'grok',
     label: 'xAI Grok',
-    description: 'xAI\'s conversational AI with real-time knowledge',
-    icon: '🤖'
+    description: 'Real-time knowledge and conversational AI',
+    defaultModel: 'grok-2-1212',
+    docsUrl: 'https://console.x.ai/',
   },
   {
     name: 'openrouter',
     label: 'OpenRouter',
-    description: 'Access multiple AI models through a unified API',
-    icon: '🔀'
+    description: 'Access Claude, GPT-4, and 100+ models',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    docsUrl: 'https://openrouter.ai/keys',
   },
   {
     name: 'ollama-cloud',
-    label: 'Ollama Cloud',
-    description: 'Self-hosted AI models in the cloud',
-    icon: '☁️'
+    label: 'Ollama',
+    description: 'Self-hosted open-source models',
+    defaultModel: 'llama3.3:70b',
+    docsUrl: 'https://ollama.ai/',
   },
 ];
 
 export default function AIProviderSettings() {
   const { user, loading, isAuthenticated } = useAuth();
   const [configs, setConfigs] = useState<Record<ProviderName, { apiKey: string; baseUrl: string; model: string }>>({
-    gemini: { apiKey: '', baseUrl: '', model: 'gemini-2.0-flash-exp' },
-    grok: { apiKey: '', baseUrl: '', model: 'grok-2-1212' },
-    openrouter: { apiKey: '', baseUrl: '', model: 'anthropic/claude-3.5-sonnet' },
-    'ollama-cloud': { apiKey: '', baseUrl: '', model: 'llama3.3:70b' },
+    gemini: { apiKey: '', baseUrl: '', model: '' },
+    grok: { apiKey: '', baseUrl: '', model: '' },
+    openrouter: { apiKey: '', baseUrl: '', model: '' },
+    'ollama-cloud': { apiKey: '', baseUrl: '', model: '' },
   });
   const [savingProvider, setSavingProvider] = useState<ProviderName | null>(null);
+  const [expandedProvider, setExpandedProvider] = useState<ProviderName | null>(null);
 
   const { data: savedConfigs, isLoading: configsLoading, refetch } = trpc.aiProviders.list.useQuery(
     undefined,
@@ -56,23 +60,23 @@ export default function AIProviderSettings() {
 
   const saveConfig = trpc.aiProviders.save.useMutation({
     onSuccess: () => {
-      toast.success("AI provider settings saved!");
+      toast.success("Configuration saved");
       setSavingProvider(null);
       refetch();
     },
     onError: (error) => {
-      toast.error(`Failed to save settings: ${error.message}`);
+      toast.error(error.message);
       setSavingProvider(null);
     },
   });
 
   const deleteConfig = trpc.aiProviders.delete.useMutation({
     onSuccess: () => {
-      toast.success("AI provider removed");
+      toast.success("Configuration removed");
       refetch();
     },
     onError: (error) => {
-      toast.error(`Failed to delete settings: ${error.message}`);
+      toast.error(error.message);
     },
   });
 
@@ -93,17 +97,17 @@ export default function AIProviderSettings() {
 
   if (loading || configsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="text-slate-400">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-400">Loading...</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Please sign in to continue</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Please sign in</h2>
           <a href={getLoginUrl()}>
             <Button>Sign In</Button>
           </a>
@@ -133,144 +137,203 @@ export default function AIProviderSettings() {
     }
   };
 
+  const isConfigured = (provider: ProviderName) => {
+    return savedConfigs?.some(c => c.provider === provider && c.apiKey);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/projects">
-              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80">
-                <Layout className="w-6 h-6 text-blue-500" />
-                <span className="text-lg font-bold text-white">OpenFlow Builder</span>
-              </div>
-            </Link>
-            <span className="text-slate-600">/</span>
-            <span className="text-slate-400">AI Provider Settings</span>
-          </div>
-          <div className="text-sm text-slate-400">
-            {user?.name || user?.email}
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/projects">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  <Layout className="w-5 h-5" />
+                  <span className="font-medium">OpenFlow</span>
+                </button>
+              </Link>
+              <span className="text-gray-300">/</span>
+              <span className="text-gray-900 font-medium">AI Configuration</span>
+            </div>
+            <div className="text-sm text-gray-500">
+              {user?.name || user?.email}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="w-8 h-8 text-blue-500" />
-            <h1 className="text-3xl font-bold text-white">AI Provider Settings</h1>
-          </div>
-          <p className="text-slate-400">
-            Configure your AI providers to enable AI-powered website generation. You need at least one provider configured to use AI features.
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="mb-10">
+          <h1 className="text-3xl font-light text-gray-900 mb-2">AI Providers</h1>
+          <p className="text-gray-500">
+            Configure your API keys to enable AI-powered website generation.
           </p>
         </div>
 
-        <div className="space-y-6">
+        {/* Provider Cards */}
+        <div className="space-y-4">
           {PROVIDERS.map((provider) => {
             const config = configs[provider.name];
-            const hasConfig = config.apiKey || config.baseUrl;
+            const configured = isConfigured(provider.name);
+            const isExpanded = expandedProvider === provider.name;
 
             return (
-              <Card key={provider.name} className="bg-slate-900 border-slate-800 p-6">
-                <div className="flex items-start justify-between mb-4">
+              <div
+                key={provider.name}
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden transition-all duration-200 hover:border-gray-300"
+              >
+                {/* Provider Header */}
+                <button
+                  onClick={() => setExpandedProvider(isExpanded ? null : provider.name)}
+                  className="w-full px-6 py-5 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${configured ? 'bg-green-50' : 'bg-gray-100'
+                      }`}>
+                      {configured ? (
+                        <Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Key className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">{provider.label}</h3>
+                      <p className="text-sm text-gray-500">{provider.description}</p>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{provider.icon}</span>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{provider.label}</h3>
-                      <p className="text-sm text-slate-400">{provider.description}</p>
-                    </div>
-                  </div>
-                  {hasConfig && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(provider.name)}
+                    {configured && (
+                      <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                        Configured
+                      </span>
+                    )}
+                    <svg
+                      className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor={`${provider.name}-key`} className="text-slate-300">
-                      API Key {provider.name === 'ollama-cloud' && '(Optional)'}
-                    </Label>
-                    <Input
-                      id={`${provider.name}-key`}
-                      type="password"
-                      value={config.apiKey}
-                      onChange={(e) => setConfigs({
-                        ...configs,
-                        [provider.name]: { ...config, apiKey: e.target.value }
-                      })}
-                      placeholder="Enter your API key"
-                      className="bg-slate-800 border-slate-700 text-white mt-2"
-                    />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
+                </button>
 
-                  {provider.name === 'ollama-cloud' && (
-                    <div>
-                      <Label htmlFor={`${provider.name}-url`} className="text-slate-300">
-                        Base URL (Required)
-                      </Label>
-                      <Input
-                        id={`${provider.name}-url`}
-                        value={config.baseUrl}
-                        onChange={(e) => setConfigs({
-                          ...configs,
-                          [provider.name]: { ...config, baseUrl: e.target.value }
-                        })}
-                        placeholder="https://your-ollama-instance.com"
-                        className="bg-slate-800 border-slate-700 text-white mt-2"
-                      />
+                {/* Expanded Content */}
+                {isExpanded && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="pt-6 space-y-5">
+                      {/* API Key */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm font-medium text-gray-700">
+                            API Key {provider.name === 'ollama-cloud' && <span className="text-gray-400 font-normal">(optional)</span>}
+                          </Label>
+                          <a
+                            href={provider.docsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          >
+                            Get API Key <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                        <Input
+                          type="password"
+                          value={config.apiKey}
+                          onChange={(e) => setConfigs({
+                            ...configs,
+                            [provider.name]: { ...config, apiKey: e.target.value }
+                          })}
+                          placeholder="Enter your API key"
+                          className="bg-white border-gray-300 text-gray-900 h-11"
+                        />
+                      </div>
+
+                      {/* Base URL (Ollama only) */}
+                      {provider.name === 'ollama-cloud' && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Base URL <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            value={config.baseUrl}
+                            onChange={(e) => setConfigs({
+                              ...configs,
+                              [provider.name]: { ...config, baseUrl: e.target.value }
+                            })}
+                            placeholder="https://your-ollama-instance.com"
+                            className="bg-white border-gray-300 text-gray-900 h-11"
+                          />
+                        </div>
+                      )}
+
+                      {/* Model */}
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Model <span className="text-gray-400 font-normal">(default: {provider.defaultModel})</span>
+                        </Label>
+                        <Input
+                          value={config.model}
+                          onChange={(e) => setConfigs({
+                            ...configs,
+                            [provider.name]: { ...config, model: e.target.value }
+                          })}
+                          placeholder={provider.defaultModel}
+                          className="bg-white border-gray-300 text-gray-900 h-11"
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-2">
+                        {configured ? (
+                          <button
+                            onClick={() => handleDelete(provider.name)}
+                            className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1.5"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                          </button>
+                        ) : (
+                          <div />
+                        )}
+                        <Button
+                          onClick={() => handleSave(provider.name)}
+                          disabled={savingProvider === provider.name}
+                          className="h-10 px-6"
+                        >
+                          {savingProvider === provider.name ? (
+                            'Saving...'
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                  )}
-
-                  <div>
-                    <Label htmlFor={`${provider.name}-model`} className="text-slate-300">
-                      Model (Optional)
-                    </Label>
-                    <Input
-                      id={`${provider.name}-model`}
-                      value={config.model}
-                      onChange={(e) => setConfigs({
-                        ...configs,
-                        [provider.name]: { ...config, model: e.target.value }
-                      })}
-                      placeholder={
-                        provider.name === 'gemini' ? 'gemini-2.0-flash-exp' :
-                          provider.name === 'grok' ? 'grok-2-1212' :
-                            provider.name === 'openrouter' ? 'anthropic/claude-3.5-sonnet' :
-                              'llama3.3:70b'
-                      }
-                      className="bg-slate-800 border-slate-700 text-white mt-2"
-                    />
                   </div>
-
-                  <Button
-                    onClick={() => handleSave(provider.name)}
-                    disabled={savingProvider === provider.name}
-                    className="w-full"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {savingProvider === provider.name ? 'Saving...' : 'Save Configuration'}
-                  </Button>
-                </div>
-              </Card>
+                )}
+              </div>
             );
           })}
         </div>
 
-        <div className="mt-8 p-6 rounded-lg bg-blue-500/10 border border-blue-500/20">
-          <h4 className="text-lg font-semibold text-blue-400 mb-2">Getting API Keys</h4>
-          <ul className="space-y-2 text-sm text-slate-300">
-            <li><strong>Gemini:</strong> Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google AI Studio</a></li>
-            <li><strong>Grok:</strong> Get your API key from <a href="https://x.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">xAI Console</a></li>
-            <li><strong>OpenRouter:</strong> Get your API key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">OpenRouter Dashboard</a></li>
-            <li><strong>Ollama Cloud:</strong> Deploy your own Ollama instance or use a cloud provider</li>
-          </ul>
+        {/* Help Section */}
+        <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-gray-900 mb-1">Need help?</h4>
+              <p className="text-sm text-gray-500">
+                You need at least one AI provider configured to use the AI builder features.
+                Your API keys are stored securely and only used to make requests on your behalf.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     </div>

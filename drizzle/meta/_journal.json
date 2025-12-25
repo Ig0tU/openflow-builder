@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1766612004385,
+      "tag": "0000_loose_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1766612188864,
+      "tag": "0001_careful_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1766627331466,
+      "tag": "0002_low_romulus",
+      "breakpoints": true
+    }
+  ]
+}

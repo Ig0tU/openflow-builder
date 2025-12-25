@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Layout, Save, Download, Sparkles, Undo2, Redo2, Monitor, Tablet, Smartphone, Settings2 } from "lucide-react";
+import { Layout, Save, Download, Upload, Sparkles, Undo2, Redo2, Monitor, Tablet, Smartphone, Settings2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
@@ -47,6 +47,16 @@ export default function Builder() {
     },
     onError: (error) => {
       toast.error(`Failed to save: ${error.message}`);
+    },
+  });
+
+  const importYOOthemeMutation = trpc.projects.importYOOtheme.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      refetchElements();
+    },
+    onError: (error) => {
+      toast.error(`Import failed: ${error.message}`);
     },
   });
 
@@ -100,10 +110,32 @@ export default function Builder() {
   };
 
   const handleExport = async () => {
-    const format = prompt('Export format:\n- html\n- nextjs\n- wordpress\n- hostinger\n- vercel\n- netlify', 'html') as 'html' | 'nextjs' | 'wordpress' | 'hostinger' | 'vercel' | 'netlify' | null;
+    const format = prompt('Export format:\n- html\n- nextjs\n- wordpress\n- hostinger\n- vercel\n- netlify\n- yootheme (Joomla)', 'html') as 'html' | 'nextjs' | 'wordpress' | 'hostinger' | 'vercel' | 'netlify' | 'yootheme' | null;
     if (!format) return;
 
     try {
+      // YOOtheme Pro export for Joomla
+      if (format === 'yootheme') {
+        const result = await utils.projects.exportYOOtheme.fetch({
+          id: parseInt(projectId!),
+          pageId: currentPageId || undefined,
+        });
+
+        const blob = new Blob([JSON.stringify(result.layout, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast.success(`Exported YOOtheme layout: ${result.filename}`);
+        return;
+      }
+
+      // Standard exports
       const result = await utils.projects.export.fetch({ id: parseInt(projectId!), format });
 
       for (const file of result.files) {
@@ -136,6 +168,37 @@ export default function Builder() {
       setHistoryIndex(historyIndex + 1);
       toast.info("Redo");
     }
+  };
+
+  const handleImportYOOtheme = () => {
+    if (!currentPageId) {
+      toast.error('Please select a page first');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const layout = JSON.parse(text);
+
+        const replace = confirm('Replace existing elements?\n\nOK = Replace all\nCancel = Append to existing');
+
+        importYOOthemeMutation.mutate({
+          pageId: currentPageId,
+          layout,
+          replace,
+        });
+      } catch (err) {
+        toast.error('Failed to parse JSON file');
+      }
+    };
+    input.click();
   };
 
   const viewportWidths = {
@@ -225,7 +288,7 @@ export default function Builder() {
 
             <div className="h-6 w-px bg-gray-200 mx-2" />
 
-            {/* AI Assistant Toggle */}
+            {/* AI Assistant Toggle + Settings */}
             <Button
               variant={showAIAssistant ? 'default' : 'outline'}
               size="sm"
@@ -235,6 +298,16 @@ export default function Builder() {
               <Sparkles className="w-4 h-4 mr-2" />
               AI Assistant
             </Button>
+            <Link href="/settings/ai">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:text-gray-900"
+                title="Configure AI API Keys"
+              >
+                <Settings2 className="w-4 h-4" />
+              </Button>
+            </Link>
 
             <div className="h-6 w-px bg-gray-200 mx-2" />
 
@@ -248,6 +321,17 @@ export default function Builder() {
             >
               <Save className="w-4 h-4 mr-2" />
               Save
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleImportYOOtheme}
+              disabled={importYOOthemeMutation.isPending}
+              className="border-gray-300 shadow-sm"
+              title="Import YOOtheme Pro layout"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import
             </Button>
             <Button
               variant="default"

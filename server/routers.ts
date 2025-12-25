@@ -302,6 +302,109 @@ export const appRouter = router({
 
         return { project: { name: project.name }, format: input.format, files: exportedFiles };
       }),
+
+    // YOOtheme Pro export for Joomla
+    exportYOOtheme: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        pageId: z.number().optional(), // Export single page or all pages
+      }))
+      .query(async ({ input, ctx }) => {
+        const project = await db.getProjectById(input.id);
+        if (!project) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (project.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+
+        const { exportToYOOtheme, exportProjectToYOOtheme } = await import('./yoothemeExporter');
+
+        if (input.pageId) {
+          // Export single page
+          const page = await db.getPageById(input.pageId);
+          if (!page || page.projectId !== project.id) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Page not found' });
+          }
+          const elements = await db.getPageElements(input.pageId);
+          const layout = exportToYOOtheme(page, elements, project);
+          return {
+            layout,
+            filename: `${page.slug || 'page'}-yootheme.json`,
+            project: { name: project.name },
+            page: { name: page.name },
+          };
+        } else {
+          // Export all pages
+          const pages = await db.getProjectPages(input.id);
+          const pagesWithElements = await Promise.all(
+            pages.map(async (page) => ({
+              page,
+              elements: await db.getPageElements(page.id),
+            }))
+          );
+          const layout = exportProjectToYOOtheme(project, pagesWithElements);
+          return {
+            layout,
+            filename: `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-yootheme.json`,
+            project: { name: project.name },
+          };
+        }
+      }),
+
+    // YOOtheme Pro import from Joomla
+    importYOOtheme: protectedProcedure
+      .input(z.object({
+        pageId: z.number(),
+        layout: z.any(), // YOOtheme JSON layout
+        replace: z.boolean().default(false), // Replace existing elements or append
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const page = await db.getPageById(input.pageId);
+        if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'Page not found' });
+
+        const project = await db.getProjectById(page.projectId);
+        if (!project || project.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN' });
+        }
+
+        const { importFromYOOtheme, validateYOOthemeLayout } = await import('./yoothemeImporter');
+
+        if (!validateYOOthemeLayout(input.layout)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Invalid YOOtheme layout format. Expected { type: "layout", children: [...] }'
+          });
+        }
+
+        // Clear existing elements if replacing
+        if (input.replace) {
+          const existing = await db.getPageElements(input.pageId);
+          for (const el of existing) {
+            await db.deleteElement(el.id);
+          }
+        }
+
+        // Import elements
+        const elements = importFromYOOtheme(input.layout);
+        const existingCount = input.replace ? 0 : (await db.getPageElements(input.pageId)).length;
+
+        const createdElements = [];
+        for (let i = 0; i < elements.length; i++) {
+          const el = elements[i];
+          const created = await db.createElement({
+            pageId: input.pageId,
+            elementType: el.elementType,
+            content: el.content,
+            styles: el.styles,
+            attributes: el.attributes,
+            order: existingCount + i,
+          });
+          createdElements.push(created);
+        }
+
+        return {
+          success: true,
+          imported: createdElements.length,
+          message: `Imported ${createdElements.length} element(s) from YOOtheme layout`,
+        };
+      }),
   }),
 
   // ============================================================================

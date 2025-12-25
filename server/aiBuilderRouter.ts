@@ -286,17 +286,24 @@ RESPONSE FORMAT (JSON only, no markdown):
         "pageId": ${input.pageId},
         "elementType": "heading",
         "content": "Welcome",
-        "styles": { "fontSize": "48px", "fontWeight": "bold", "color": "#1a1a2e", "textAlign": "center", "padding": "40px" }
+        "styles": { "fontSize": "48px", "fontWeight": "bold", "color": "#1a1a2e", "textAlign": "center", "padding": "40px 24px", "width": "100%" }
       }
     }
   ]
 }
 
+LAYOUT RULES (CRITICAL):
+- DO NOT use position: absolute - elements should flow vertically
+- Use width: 100% for full-width elements
+- Add padding and margin for spacing between elements
+- Stack elements top to bottom - first created appears at top
+
 STYLE GUIDELINES:
 - Use modern, premium aesthetics (gradients, shadows, proper spacing)
-- Default colors: deep navy #1a1a2e, vibrant blue #3b82f6, clean white, subtle grays
-- Proper padding/margins (16px, 24px, 32px, 48px)
+- Default colors: deep navy #1a1a2e, vibrant blue #3b82f6, clean white #ffffff, subtle grays
+- Proper padding (24px, 48px, 64px) and margin (16px, 24px, 32px)
 - Font sizes: headings 36-64px, body 16-18px, small 14px
+- Buttons: inline-block, centered with margin: 16px auto
 
 Always include pageId: ${input.pageId} in createElement actions.
 Return ONLY valid JSON.`;

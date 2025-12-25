@@ -56,6 +56,7 @@ export default function CanvasEditor({
   };
 
   const getDefaultStyles = (type: string): Record<string, string> => {
+    // For drag-drop, we use absolute positioning at the drop point
     const base: Record<string, string> = {
       position: 'absolute',
       minWidth: '100px',

@@ -6,7 +6,7 @@ import type { Element } from '../drizzle/schema';
  * This service provides functions that the AI can call to operate the builder interface
  */
 
-export type BuilderAction = 
+export type BuilderAction =
   | { type: 'createElement'; data: CreateElementAction }
   | { type: 'updateElement'; data: UpdateElementAction }
   | { type: 'deleteElement'; data: DeleteElementAction }
@@ -81,7 +81,7 @@ async function createElementAction(data: CreateElementAction, userId: number): P
   // Verify user has access to the page
   const page = await db.getPageById(data.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -89,7 +89,7 @@ async function createElementAction(data: CreateElementAction, userId: number): P
 
   // Get current elements to determine order
   const elements = await db.getPageElements(data.pageId);
-  
+
   // Default styles based on element type
   const defaultStyles = getDefaultStyles(data.elementType, data.position);
   const mergedStyles = { ...defaultStyles, ...(data.styles || {}) };
@@ -118,7 +118,7 @@ async function updateElementAction(data: UpdateElementAction, userId: number): P
   // Verify user has access
   const page = await db.getPageById(element.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -144,7 +144,7 @@ async function deleteElementAction(data: DeleteElementAction, userId: number): P
   // Verify user has access
   const page = await db.getPageById(element.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -164,7 +164,7 @@ async function selectElementAction(data: SelectElementAction, userId: number): P
   // Verify user has access
   const page = await db.getPageById(element.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -183,7 +183,7 @@ async function updateStyleAction(data: UpdateStyleAction, userId: number): Promi
   // Verify user has access
   const page = await db.getPageById(element.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -213,7 +213,7 @@ async function updateContentAction(data: UpdateContentAction, userId: number): P
   // Verify user has access
   const page = await db.getPageById(element.pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
@@ -239,25 +239,37 @@ async function updateContentAction(data: UpdateContentAction, userId: number): P
  * Get default styles for an element type
  */
 function getDefaultStyles(type: string, position?: { x: number; y: number }): Record<string, string> {
+  // Use flow layout by default for AI-generated elements - they should stack vertically
   const base: Record<string, string> = {
-    position: 'absolute',
-    left: position ? `${position.x}px` : '50px',
-    top: position ? `${position.y}px` : '50px',
+    display: 'block',
+    width: '100%',
+    marginBottom: '16px',
+    boxSizing: 'border-box',
   };
+
+  // Only use absolute positioning if explicit position provided (drag-and-drop)
+  if (position) {
+    return {
+      position: 'absolute',
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+    };
+  }
 
   switch (type) {
     case 'container':
-      return { ...base, width: '400px', height: '300px', backgroundColor: '#f3f4f6', border: '2px dashed #d1d5db', padding: '20px' };
+    case 'section':
+      return { ...base, padding: '48px 24px', backgroundColor: '#f8fafc' };
     case 'heading':
-      return { ...base, fontSize: '32px', fontWeight: 'bold', color: '#1f2937' };
+      return { ...base, fontSize: '36px', fontWeight: 'bold', color: '#1a1a2e', textAlign: 'center', padding: '24px 0' };
     case 'text':
-      return { ...base, fontSize: '16px', color: '#4b5563' };
+      return { ...base, fontSize: '18px', color: '#4b5563', lineHeight: '1.7', padding: '0 24px', textAlign: 'center' };
     case 'button':
-      return { ...base, backgroundColor: '#3b82f6', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer' };
+      return { ...base, width: 'auto', display: 'inline-block', backgroundColor: '#3b82f6', color: 'white', padding: '14px 32px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', margin: '16px auto' };
     case 'image':
-      return { ...base, width: '400px', height: '300px' };
+      return { ...base, maxWidth: '100%', height: 'auto', margin: '24px auto', display: 'block' };
     case 'input':
-      return { ...base, width: '300px', padding: '10px', border: '1px solid #d1d5db', borderRadius: '4px' };
+      return { ...base, width: '300px', maxWidth: '100%', padding: '12px 16px', border: '1px solid #d1d5db', borderRadius: '6px', margin: '8px auto' };
     default:
       return base;
   }
@@ -288,24 +300,24 @@ export async function findElementsByDescription(
   // Verify user has access
   const page = await db.getPageById(pageId);
   if (!page) throw new Error('Page not found');
-  
+
   const project = await db.getProjectById(page.projectId);
   if (!project || project.userId !== userId) {
     throw new Error('Unauthorized');
   }
 
   const elements = await db.getPageElements(pageId);
-  
+
   // Simple matching logic - can be enhanced with ML
   const keywords = description.toLowerCase().split(' ');
-  
+
   return elements.filter((element: Element) => {
     const content = (element.content || '').toLowerCase();
     const type = element.elementType.toLowerCase();
     const styles = element.styles as Record<string, string> || {};
-    
+
     // Check if description matches content, type, or style properties
-    return keywords.some(keyword => 
+    return keywords.some(keyword =>
       content.includes(keyword) ||
       type.includes(keyword) ||
       Object.values(styles).some(v => String(v).toLowerCase().includes(keyword))

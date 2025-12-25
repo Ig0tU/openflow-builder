@@ -35,6 +35,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // SSE streaming endpoints under /api/stream
+  const { registerStreamRoutes } = await import("./streaming");
+  registerStreamRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

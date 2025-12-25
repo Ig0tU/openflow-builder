@@ -31,6 +31,11 @@ export type AIGenerationResponse = {
   };
 };
 
+export type AIStreamChunk = {
+  content: string;
+  done: boolean;
+};
+
 /**
  * Schema validators for AI-generated responses
  */
@@ -126,6 +131,67 @@ export class AIService {
         return this.generateOllamaCloud(request);
       default:
         throw new Error(`Unsupported AI provider: ${this.provider}`);
+    }
+  }
+
+  /**
+   * Generate AI response with streaming support
+   * Yields chunks as they arrive for real-time display
+   */
+  async *generateStream(request: AIGenerationRequest): AsyncGenerator<AIStreamChunk> {
+    validateAIMessages(request.messages);
+
+    // Only Ollama Cloud supports streaming currently
+    if (this.provider === 'ollama-cloud') {
+      const url = this.baseUrl || 'https://ollama.com';
+      const model = this.model || 'qwen3-coder:480b-cloud';
+
+      const response = await axios.post(
+        `${url}/api/chat`,
+        {
+          model,
+          messages: request.messages,
+          stream: true,
+          options: {
+            temperature: Math.min(Math.max(request.temperature || 0.7, 0), 2),
+            num_predict: Math.min(request.maxTokens || 2048, 8192),
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
+          },
+          responseType: 'stream',
+          timeout: MAX_API_TIMEOUT,
+        }
+      );
+
+      // Parse streaming NDJSON response
+      let buffer = '';
+      for await (const chunk of response.data) {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              yield {
+                content: data.message?.content || '',
+                done: data.done || false,
+              };
+            } catch (e) {
+              // Skip malformed JSON lines
+            }
+          }
+        }
+      }
+    } else {
+      // Fallback to non-streaming for other providers
+      const response = await this.generate(request);
+      yield { content: response.content, done: true };
     }
   }
 
@@ -279,7 +345,8 @@ export class AIService {
     validateAIMessages(request.messages);
 
     const url = this.baseUrl || 'https://openrouter.ai/api/v1';
-    const model = this.model || 'anthropic/claude-3.5-sonnet';
+    // Default to free coding model
+    const model = this.model || 'mistralai/devstral-2512:free';
 
     const result = await circuitBreakers.gemini.execute(async () => {
       const retryResult = await withRetry(
@@ -340,19 +407,18 @@ export class AIService {
    * Ollama Cloud API integration with retry logic
    */
   private async generateOllamaCloud(request: AIGenerationRequest): Promise<AIGenerationResponse> {
-    if (!this.baseUrl) {
-      throw new Error('Ollama Cloud requires a baseUrl to be configured');
-    }
-
     validateAIMessages(request.messages);
 
-    const model = this.model || 'llama3.3:70b';
+    // Default to Ollama Cloud API
+    const url = this.baseUrl || 'https://ollama.com';
+    // Best cloud models: qwen3-coder:480b-cloud (coding), qwen3-vl:235b-cloud (vision)
+    const model = this.model || 'qwen3-coder:480b-cloud';
 
     const result = await circuitBreakers.gemini.execute(async () => {
       const retryResult = await withRetry(
         async () => {
           const response = await axios.post(
-            `${this.baseUrl}/api/chat`,
+            `${url}/api/chat`,
             {
               model,
               messages: request.messages,

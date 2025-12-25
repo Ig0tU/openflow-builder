@@ -29,17 +29,31 @@ const PROVIDERS: { name: ProviderName; label: string; description: string; defau
   {
     name: 'openrouter',
     label: 'OpenRouter',
-    description: 'Access Claude, GPT-4, and 100+ models',
-    defaultModel: 'anthropic/claude-3.5-sonnet',
+    description: 'Free coding, vision & reasoning models',
+    defaultModel: 'mistralai/devstral-2512:free',
     docsUrl: 'https://openrouter.ai/keys',
   },
   {
     name: 'ollama-cloud',
-    label: 'Ollama',
-    description: 'Self-hosted open-source models',
-    defaultModel: 'llama3.3:70b',
-    docsUrl: 'https://ollama.ai/',
+    label: 'Ollama Cloud',
+    description: 'Run powerful cloud models (coding, vision, reasoning)',
+    defaultModel: 'qwen3-coder:480b-cloud',
+    docsUrl: 'https://ollama.com/cloud',
   },
+];
+
+// Free OpenRouter models curated for coding and vision
+const OPENROUTER_FREE_MODELS = [
+  { id: 'mistralai/devstral-2512:free', label: 'Devstral 2512 (Coding)', category: 'coding' },
+  { id: 'kwaipilot/kat-coder-pro:free', label: 'KAT Coder Pro (Coding)', category: 'coding' },
+  { id: 'xiaomi/mimo-v2-flash:free', label: 'MiMo V2 Flash (Vision)', category: 'vision' },
+  { id: 'nvidia/nemotron-nano-12b-v2-vl:free', label: 'Nemotron Nano VL (Vision)', category: 'vision' },
+  { id: 'tngtech/deepseek-r1t2-chimera:free', label: 'DeepSeek R1T2 Chimera (Reasoning)', category: 'reasoning' },
+  { id: 'tngtech/deepseek-r1t-chimera:free', label: 'DeepSeek R1T Chimera (Reasoning)', category: 'reasoning' },
+  { id: 'tngtech/tng-r1t-chimera:free', label: 'TNG R1T Chimera (Reasoning)', category: 'reasoning' },
+  { id: 'nex-agi/deepseek-v3.1-nex-n1:free', label: 'DeepSeek V3.1 Nex (General)', category: 'general' },
+  { id: 'nvidia/nemotron-3-nano-30b-a3b:free', label: 'Nemotron 3 Nano 30B (General)', category: 'general' },
+  { id: 'z-ai/glm-4.5-air:free', label: 'GLM 4.5 Air (General)', category: 'general' },
 ];
 
 export default function AIProviderSettings() {
@@ -252,11 +266,11 @@ export default function AIProviderSettings() {
                         />
                       </div>
 
-                      {/* Base URL (Ollama only) */}
+                      {/* Base URL (Ollama only - optional, defaults to ollama.com) */}
                       {provider.name === 'ollama-cloud' && (
                         <div>
                           <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                            Base URL <span className="text-red-500">*</span>
+                            Base URL <span className="text-gray-400 font-normal">(default: ollama.com)</span>
                           </Label>
                           <Input
                             value={config.baseUrl}
@@ -264,9 +278,12 @@ export default function AIProviderSettings() {
                               ...configs,
                               [provider.name]: { ...config, baseUrl: e.target.value }
                             })}
-                            placeholder="https://your-ollama-instance.com"
+                            placeholder="https://ollama.com"
                             className="bg-white border-gray-300 text-gray-900 h-11"
                           />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Leave empty to use Ollama Cloud, or enter your self-hosted Ollama URL
+                          </p>
                         </div>
                       )}
 
@@ -275,15 +292,55 @@ export default function AIProviderSettings() {
                         <Label className="text-sm font-medium text-gray-700 mb-2 block">
                           Model <span className="text-gray-400 font-normal">(default: {provider.defaultModel})</span>
                         </Label>
-                        <Input
-                          value={config.model}
-                          onChange={(e) => setConfigs({
-                            ...configs,
-                            [provider.name]: { ...config, model: e.target.value }
-                          })}
-                          placeholder={provider.defaultModel}
-                          className="bg-white border-gray-300 text-gray-900 h-11"
-                        />
+
+                        {/* OpenRouter model presets */}
+                        {provider.name === 'openrouter' && (
+                          <div className="mb-2">
+                            <select
+                              className="w-full h-10 px-3 bg-white border border-gray-300 rounded-md text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              value={config.model || ''}
+                              onChange={(e) => setConfigs({
+                                ...configs,
+                                [provider.name]: { ...config, model: e.target.value }
+                              })}
+                            >
+                              <option value="">Select a free model...</option>
+                              <optgroup label="🔧 Coding">
+                                {OPENROUTER_FREE_MODELS.filter(m => m.category === 'coding').map(m => (
+                                  <option key={m.id} value={m.id}>{m.label}</option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="👁️ Vision">
+                                {OPENROUTER_FREE_MODELS.filter(m => m.category === 'vision').map(m => (
+                                  <option key={m.id} value={m.id}>{m.label}</option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="🧠 Reasoning">
+                                {OPENROUTER_FREE_MODELS.filter(m => m.category === 'reasoning').map(m => (
+                                  <option key={m.id} value={m.id}>{m.label}</option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="💬 General">
+                                {OPENROUTER_FREE_MODELS.filter(m => m.category === 'general').map(m => (
+                                  <option key={m.id} value={m.id}>{m.label}</option>
+                                ))}
+                              </optgroup>
+                            </select>
+                            <p className="text-xs text-green-600 mt-1">✨ All models above are FREE</p>
+                          </div>
+                        )}
+
+                        {provider.name !== 'openrouter' && (
+                          <Input
+                            value={config.model}
+                            onChange={(e) => setConfigs({
+                              ...configs,
+                              [provider.name]: { ...config, model: e.target.value }
+                            })}
+                            placeholder={provider.defaultModel}
+                            className="bg-white border-gray-300 text-gray-900 h-11"
+                          />
+                        )}
                       </div>
 
                       {/* Actions */}

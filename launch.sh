@@ -188,43 +188,100 @@ EOF
 # 4. SET UP DATABASE
 ##############################################################################
 
+start_mysql() {
+  # Check if port 3306 is already open
+  if nc -z 127.0.0.1 3306 2>/dev/null; then
+    echo -e "${GREEN}✓ MySQL is already running on port 3306${NC}"
+    return 0
+  fi
+
+  echo -e "${YELLOW}Starting MySQL...${NC}"
+
+  # Try Homebrew first (most common on macOS)
+  if [[ "$OS_TYPE" == "macOS" ]]; then
+    if check_command brew; then
+      # Try different homebrew mysql service names
+      if brew services start mysql@8.0 2>/dev/null || \
+         brew services start mysql 2>/dev/null || \
+         brew services start mysql-community-server 2>/dev/null; then
+        sleep 3
+        if nc -z 127.0.0.1 3306 2>/dev/null; then
+          echo -e "${GREEN}✓ MySQL started via Homebrew${NC}"
+          return 0
+        fi
+      fi
+    fi
+    
+    # Try native MySQL on macOS
+    if [[ -f /usr/local/mysql/support-files/mysql.server ]]; then
+      sudo /usr/local/mysql/support-files/mysql.server start 2>/dev/null
+      sleep 3
+      if nc -z 127.0.0.1 3306 2>/dev/null; then
+        echo -e "${GREEN}✓ MySQL started (native install)${NC}"
+        return 0
+      fi
+    fi
+  fi
+
+  # Try systemctl on Linux
+  if [[ "$OS_TYPE" == "Linux" ]]; then
+    if sudo systemctl start mysql 2>/dev/null || sudo systemctl start mariadb 2>/dev/null; then
+      sleep 2
+      if nc -z 127.0.0.1 3306 2>/dev/null; then
+        echo -e "${GREEN}✓ MySQL started via systemctl${NC}"
+        return 0
+      fi
+    fi
+  fi
+
+  # Docker fallback (optional - only if Docker is installed and user wants it)
+  if check_command docker; then
+    echo -e "${YELLOW}Trying Docker as fallback...${NC}"
+    
+    # Check if container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q '^openflow-mysql$'; then
+      docker start openflow-mysql 2>/dev/null
+    else
+      docker run -d --name openflow-mysql \
+        -e MYSQL_ROOT_PASSWORD=openflow \
+        -e MYSQL_DATABASE=openflow_builder \
+        -p 3306:3306 \
+        mysql:8 2>/dev/null
+    fi
+    
+    sleep 5
+    if nc -z 127.0.0.1 3306 2>/dev/null; then
+      echo -e "${GREEN}✓ MySQL started via Docker${NC}"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
 setup_database() {
   echo -e "${BLUE}[4/7]${NC} Setting up database..."
 
-  # Check if MySQL is running
+  # First, try to start MySQL if not running
+  if ! start_mysql; then
+    echo -e "${RED}✗ Could not start MySQL${NC}"
+    echo -e "${YELLOW}Please install MySQL via one of:${NC}"
+    echo -e "  • Homebrew: ${BLUE}brew install mysql && brew services start mysql${NC}"
+    echo -e "  • Docker:   ${BLUE}docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=openflow mysql:8${NC}"
+    echo ""
+    echo -e "${YELLOW}The app will start but database features won't work until MySQL is running.${NC}"
+    return
+  fi
+
+  # Create database if mysql client is available
   if check_command mysql; then
-    echo -e "${YELLOW}Checking MySQL...${NC}"
-
-    # Try to connect to MySQL
-    if mysql -u root -p -e "SELECT 1" &> /dev/null || \
-       mysql -u root -e "SELECT 1" &> /dev/null; then
-      echo -e "${GREEN}✓ MySQL is running${NC}"
-
-      # Create database if it doesn't exist
-      mysql -u root -e "CREATE DATABASE IF NOT EXISTS openflow_builder;"
-      echo -e "${GREEN}✓ Database created/verified${NC}"
+    # Try different auth methods to create database
+    if mysql -u root -popenflow -e "CREATE DATABASE IF NOT EXISTS openflow_builder;" 2>/dev/null || \
+       mysql -u root -e "CREATE DATABASE IF NOT EXISTS openflow_builder;" 2>/dev/null; then
+      echo -e "${GREEN}✓ Database 'openflow_builder' ready${NC}"
     else
-      echo -e "${YELLOW}MySQL not running. Starting MySQL...${NC}"
-
-      if [[ "$OS_TYPE" == "macOS" ]]; then
-        brew services start mysql-community-server || brew services start mysql || true
-        sleep 2
-      elif [[ "$OS_TYPE" == "Linux" ]]; then
-        sudo systemctl start mysql || sudo systemctl start mariadb || true
-        sleep 2
-      fi
-
-      # Try again
-      if mysql -u root -e "SELECT 1" &> /dev/null; then
-        mysql -u root -e "CREATE DATABASE IF NOT EXISTS openflow_builder;"
-        echo -e "${GREEN}✓ Database created/verified${NC}"
-      else
-        echo -e "${YELLOW}⚠ Could not start MySQL - will attempt migrations anyway${NC}"
-      fi
+      echo -e "${YELLOW}⚠ Could not create database (may already exist or need password)${NC}"
     fi
-  else
-    echo -e "${YELLOW}MySQL client not available - skipping database setup${NC}"
-    echo -e "${YELLOW}Please ensure MySQL is running on localhost:3306${NC}"
   fi
 }
 

@@ -22,6 +22,17 @@ export default function CanvasEditor({
 }: CanvasEditorProps) {
   const [dragOver, setDragOver] = useState(false);
 
+  // All hooks must be called before any conditional returns
+  const createElement = trpc.elements.create.useMutation({
+    onSuccess: () => {
+      toast.success('Element added!');
+      onElementsChange();
+    },
+    onError: (error) => {
+      toast.error(`Failed to add element: ${error.message}`);
+    },
+  });
+
   if (!pageId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white text-slate-400">
@@ -32,16 +43,6 @@ export default function CanvasEditor({
       </div>
     );
   }
-
-  const createElement = trpc.elements.create.useMutation({
-    onSuccess: () => {
-      toast.success('Element added!');
-      onElementsChange();
-    },
-    onError: (error) => {
-      toast.error(`Failed to add element: ${error.message}`);
-    },
-  });
 
   const getDefaultContent = (type: string): string => {
     switch (type) {
@@ -83,7 +84,7 @@ export default function CanvasEditor({
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
-    
+
     const elementType = e.dataTransfer.getData('elementType');
     if (!elementType || !pageId) return;
 
